@@ -1,0 +1,710 @@
+// ExoClass Calendar JavaScript
+(function($) {
+    'use strict';
+    
+    // Store original events for filtering
+    let originalEvents = [];
+    let calendar;
+    
+    // Store filter data from APIs
+    let filterData = {
+        locations: [],
+        activities: [],
+        difficultyLevels: [],
+        ages: [],
+        availableFilters: []
+    };
+    
+    // API configuration from WordPress
+    const API_CONFIG = exoclass_ajax.api_config;
+    
+    $(document).ready(function() {
+        var calendarEl = document.getElementById('calendar');
+        
+        if (!calendarEl) {
+            console.error('Calendar element not found');
+            return;
+        }
+        
+        // Detect mobile device
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: isMobile() ? 'dayGridDay' : 'dayGridWeek',
+            headerToolbar: {
+                left: '',
+                center: 'title',
+                right: 'prev,next',
+            },
+            height: 'auto',
+            contentHeight: 'auto',
+            aspectRatio: null,
+            locale: 'lt',
+            firstDay: 1, // Monday start
+            timeZone: 'Europe/Vilnius',
+            dayMaxEvents: false,
+            eventMaxStack: 3,
+            
+            // Events will be loaded from API
+            events: function(fetchInfo, successCallback, failureCallback) {
+                console.log('Calendar requesting events for:', fetchInfo.start, 'to', fetchInfo.end);
+                loadEventsFromAPI(successCallback, failureCallback, {});
+            },
+            
+                            // Custom event content rendering
+                eventContent: function(arg) {
+                    let event = arg.event;
+                    let props = event.extendedProps;
+                    
+                    // Format time for Lithuanian locale
+                    let startTime = event.start.toLocaleTimeString('lt-LT', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        timeZone: 'Europe/Vilnius'
+                    });
+                    let endTime = event.end ? event.end.toLocaleTimeString('lt-LT', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        timeZone: 'Europe/Vilnius'
+                    }) : '';
+                    let timeRange = startTime + (endTime ? ' - ' + endTime : '');
+                    
+                    // Determine availability status
+                    let spotsClass = 'available';
+                    let spotsText = 'Laisvos vietos';
+                    let statusClass = '';
+                    
+                    if (props.availableSpots === 0) {
+                        spotsClass = 'full';
+                        spotsText = 'Pilna';
+                        statusClass = 'full';
+                    } else if (props.availableSpots <= 3) {
+                        spotsClass = 'limited';
+                        spotsText = 'Ribotos vietos';
+                        statusClass = 'limited';
+                    }
+                    
+                    // Get activity image or fallback to visual system
+                    let { imageUrl, gradient, icon } = getActivityImage(props.activityData, props.activityName);
+                    
+                    // Use the original title as-is (user-set names must remain unchanged)
+                    let displayTitle = event.title;
+                    
+                    // Create custom HTML content with image or fallback visual
+                    let headerContent = '';
+                    
+                    // Check if images should be shown
+                    if (exoclass_ajax.show_images) {
+                        if (imageUrl) {
+                            headerContent = `
+                                <div class="event-image-header" style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+                                    <div class="event-image-overlay" style="background: ${gradient}; opacity: 0.3;"></div>
+                                </div>
+                            `;
+                        } else {
+                            headerContent = `
+                                <div class="event-image-header" style="background: ${gradient};">
+                                    <div class="event-activity-icon">${icon}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    let html = `
+                        <div class="event-content ${!exoclass_ajax.show_images ? 'compact' : ''}" data-group-id="${props.groupId || ''}">
+                            ${headerContent}
+                            <div class="event-main-content">
+                                <div class="event-time">${timeRange}</div>
+                                <div class="event-title" title="${event.title}">${displayTitle}</div>
+                                <div class="event-teacher">${props.teacher || 'Instruktorius'}</div>
+                                <div class="event-spots ${spotsClass}">
+                                    <span class="spots-icon">👥</span>
+                                    ${spotsText}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    return { html: html };
+                },
+            
+            // Event interaction - open group management page
+            eventClick: function(info) {
+                let props = info.event.extendedProps;
+                if (props.groupExternalKey || props.groupId) {
+                    // Use external_key if available, otherwise fall back to groupId
+                    const groupKey = props.groupExternalKey || props.groupId;
+                    const groupManagementUrl = `https://test.embed.exoclass.com/en/embed/provider/${API_CONFIG.provider_key}/group-management/${groupKey}`;
+                    
+                    console.log('Opening group management:', groupManagementUrl);
+                    // Open in new tab
+                    window.open(groupManagementUrl, '_blank');
+                } else {
+                    // Fallback to showing details if no group identifier
+                    alert('Klasė: ' + info.event.title + '\n' +
+                          'Instruktorius: ' + props.teacher + '\n' +
+                          'Laikas: ' + info.event.start.toLocaleString() + 
+                          (info.event.end ? ' - ' + info.event.end.toLocaleTimeString() : '') + '\n' +
+                          'Laisvos vietos: ' + props.availableSpots + '/' + props.maxSpots);
+                }
+            },
+            
+            // Customize day headers
+            dayHeaderContent: function(arg) {
+                return arg.text;
+            },
+            
+            // Enable day clicking
+            dateClick: function(info) {
+                console.log('Clicked on: ' + info.dateStr);
+                // You could add functionality to create new events here
+            },
+            
+            // Responsive design
+            windowResize: function() {
+                calendar.updateSize();
+                
+                // Switch view based on screen size
+                const currentView = calendar.view.type;
+                const isMobileNow = window.innerWidth <= 768;
+                
+                if (isMobileNow && currentView === 'dayGridWeek') {
+                    // Switch to day view on mobile
+                    calendar.changeView('dayGridDay');
+                } else if (!isMobileNow && currentView === 'dayGridDay') {
+                    // Switch to week view on desktop
+                    calendar.changeView('dayGridWeek');
+                }
+            }
+        });
+        
+        calendar.render();
+        
+        // Force calendar to resize to content after render
+        setTimeout(() => {
+            calendar.updateSize();
+            forceCalendarHeight();
+        }, 100);
+        
+        // Load filter data and initialize filters
+        loadFilterData().then(() => {
+            initializeFilters();
+            setupEventHoverEffects();
+            // Force resize again after data loads
+            setTimeout(() => {
+                forceCalendarHeight();
+            }, 200);
+        });
+    });
+    
+
+    
+    // Setup hover effects for related events
+    function setupEventHoverEffects() {
+        // Use event delegation for hover effects
+        $('#calendar').on('mouseenter', '.fc-event', function() {
+            const eventContent = $(this).find('.event-content');
+            if (eventContent.length) {
+                const groupId = eventContent.attr('data-group-id');
+                if (groupId) {
+                    highlightRelatedEvents(groupId);
+                }
+            }
+        });
+        
+        $('#calendar').on('mouseleave', '.fc-event', function() {
+            clearEventHighlights();
+        });
+    }
+    
+    // Highlight all events from the same group
+    function highlightRelatedEvents(groupId) {
+        $('.fc-event').each(function() {
+            const eventContent = $(this).find('.event-content');
+            if (eventContent.length && eventContent.attr('data-group-id') === groupId) {
+                $(this).addClass('highlight-related');
+            }
+        });
+    }
+    
+    // Clear all event highlights
+    function clearEventHighlights() {
+        $('.fc-event.highlight-related').removeClass('highlight-related');
+    }
+    
+    // Smooth loading indicator functions
+    function showLoadingIndicator() {
+        const loadingIndicator = $('#loadingIndicator');
+        const calendarContainer = $('.calendar-container');
+        
+        loadingIndicator.css('display', 'flex');
+        calendarContainer.addClass('loading');
+        
+        setTimeout(() => {
+            loadingIndicator.addClass('show');
+        }, 10);
+    }
+    
+    function hideLoadingIndicator() {
+        const loadingIndicator = $('#loadingIndicator');
+        const calendarContainer = $('.calendar-container');
+        
+        loadingIndicator.removeClass('show');
+        calendarContainer.removeClass('loading');
+        
+        setTimeout(() => {
+            loadingIndicator.css('display', 'none');
+        }, 400); // Match the CSS transition duration
+    }
+    
+    // Load all filter data from APIs using WordPress AJAX
+    async function loadFilterData() {
+        showLoadingIndicator();
+        
+        try {
+            console.log('Loading filter data from APIs...');
+            
+            const response = await $.ajax({
+                url: exoclass_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'exoclass_get_filters',
+                    nonce: exoclass_ajax.nonce
+                }
+            });
+            
+            if (response.success) {
+                filterData = response.data;
+                
+                console.log('Filter data loaded successfully:');
+                console.log('- Locations:', filterData.locations ? filterData.locations.length : 0);
+                console.log('- Activities:', filterData.activities ? filterData.activities.length : 0);
+                console.log('- Difficulty levels:', filterData.difficulty_levels ? filterData.difficulty_levels.length : 0);
+                console.log('Full filter data:', filterData);
+            } else {
+                console.error('Error loading filter data:', response.data);
+            }
+            
+        } catch (error) {
+            console.error('Error loading filter data:', error);
+        } finally {
+            hideLoadingIndicator();
+        }
+    }
+    
+    // Load events from ExoClass API using WordPress AJAX
+    async function loadEventsFromAPI(successCallback, failureCallback, filters = {}) {
+        try {
+            // Show loading indicator
+            showLoadingIndicator();
+            console.log('Loading classes from API...', filters);
+            
+            const response = await $.ajax({
+                url: exoclass_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'exoclass_get_events',
+                    nonce: exoclass_ajax.nonce,
+                    filters: filters
+                }
+            });
+            
+            if (response.success) {
+                const events = response.data;
+                console.log(`Loaded ${events.length} events from API`);
+                
+                // Store original events for filtering
+                originalEvents = events.map(event => ({
+                    title: event.title,
+                    start: new Date(event.start),
+                    end: new Date(event.end),
+                    className: event.className,
+                    extendedProps: event.extendedProps
+                }));
+                
+                // Hide loading indicator
+                hideLoadingIndicator();
+                
+                if (events.length === 0) {
+                    console.warn('No events found in API response, using fallback data');
+                    const fallbackEvents = getFallbackEvents();
+                    originalEvents = fallbackEvents;
+                    successCallback(fallbackEvents);
+                } else {
+                    successCallback(events);
+                }
+            } else {
+                throw new Error(response.data.message || 'Unknown error');
+            }
+            
+        } catch (error) {
+            console.error('Error loading events from API:', error);
+            
+            // Hide loading indicator
+            hideLoadingIndicator();
+            
+            // Show error message and fallback to sample data
+            const errorDiv = $('<div>').css({
+                'background': '#fff3cd',
+                'border': '1px solid #ffeaa7',
+                'color': '#856404',
+                'padding': '10px',
+                'margin': '10px 0',
+                'border-radius': '4px',
+                'text-align': 'center'
+            }).html(`
+                ⚠️ Could not load live data from API. Showing sample data instead.<br>
+                <small>Error: ${error.message}</small>
+            `);
+            
+            $('.exoclass-calendar-container').prepend(errorDiv);
+            
+            console.log('Falling back to sample data...');
+            const fallbackEvents = getFallbackEvents();
+            originalEvents = fallbackEvents;
+            successCallback(fallbackEvents);
+        }
+    }
+    
+    // Determine class category based on activity name
+    function getClassCategory(activityName) {
+        const name = activityName.toLowerCase();
+        
+        if (name.includes('yoga') || name.includes('pilates') || name.includes('meditation')) {
+            return 'yoga-class';
+        } else if (name.includes('dance') || name.includes('zumba') || name.includes('rhythm')) {
+            return 'dance-class';
+        } else if (name.includes('strength') || name.includes('weight') || name.includes('muscle') || name.includes('sculpt')) {
+            return 'strength-class';
+        } else if (name.includes('cardio') || name.includes('hiit') || name.includes('running') || name.includes('cycle')) {
+            return 'cardio-class';
+        } else {
+            return 'fitness-class';
+        }
+    }
+    
+    // Fallback events if API fails
+    function getFallbackEvents() {
+        return [
+            {
+                title: 'POWER COMBO TSH',
+                start: getDateString(0, 7, 30),
+                end: getDateString(0, 8, 20),
+                className: 'strength-class',
+                extendedProps: {
+                    teacher: 'Sarah Johnson',
+                    availableSpots: 5,
+                    maxSpots: 15
+                }
+            },
+            {
+                title: 'ATHLETICS TSH', 
+                start: getDateString(0, 8, 0),
+                end: getDateString(0, 9, 0),
+                className: 'fitness-class',
+                extendedProps: {
+                    teacher: 'Mike Davis',
+                    availableSpots: 0,
+                    maxSpots: 12
+                }
+            }
+        ];
+    }
+    
+    // Initialize filter functionality
+    function initializeFilters() {
+        // Populate filter dropdowns from API data
+        populateLocationDropdown();
+        populateActivityDropdown(); 
+        populateDifficultyDropdown();
+        populateAgeDropdown();
+        
+        // Add change listeners to all filter dropdowns
+        const dropdowns = ['#locationDropdown', '#activityDropdown', '#difficultyDropdown', '#ageDropdown', '#availabilityDropdown'];
+        dropdowns.forEach(selector => {
+            $(selector).on('change', function() {
+                // Auto-apply filters when dropdown changes
+                applyFiltersToCalendar();
+            });
+        });
+        
+        // Clear filters
+        $('#clearFilters').on('click', function() {
+            // Reset all dropdown values
+            $('#locationDropdown').val('');
+            $('#activityDropdown').val('');
+            $('#difficultyDropdown').val('');
+            $('#ageDropdown').val('');
+            $('#availabilityDropdown').val('');
+            
+            // Remove existing event sources and reload without filters
+            calendar.removeAllEventSources();
+            calendar.addEventSource(function(fetchInfo, successCallback, failureCallback) {
+                loadEventsFromAPI(successCallback, failureCallback, {});
+            });
+        });
+        
+        // Apply filters
+        $('#applyFilters').on('click', function() {
+            applyFiltersToCalendar();
+        });
+    }
+    
+    // Populate location dropdown
+    function populateLocationDropdown() {
+        const locationDropdown = $('#locationDropdown');
+        
+        if (filterData.locations && filterData.locations.length > 0) {
+            console.log('Populating location dropdown:', filterData.locations.length);
+            filterData.locations.forEach(location => {
+                locationDropdown.append(`<option value="${location.id}">${location.name}</option>`);
+            });
+        } else {
+            console.warn('No locations data available');
+        }
+    }
+    
+    // Populate activity dropdown
+    function populateActivityDropdown() {
+        const activityDropdown = $('#activityDropdown');
+        
+        if (filterData.activities && filterData.activities.length > 0) {
+            console.log('Populating activity dropdown:', filterData.activities.length);
+            filterData.activities.forEach(activity => {
+                activityDropdown.append(`<option value="${activity.id}">${activity.name}</option>`);
+            });
+        } else {
+            console.warn('No activities data available');
+        }
+    }
+    
+    // Populate difficulty dropdown
+    function populateDifficultyDropdown() {
+        const difficultyDropdown = $('#difficultyDropdown');
+        const difficultyGroup = $('#difficultyGroup');
+        
+        if (filterData.difficulty_levels && filterData.difficulty_levels.length > 0) {
+            difficultyGroup.show();
+            console.log('Populating difficulty dropdown:', filterData.difficulty_levels.length);
+            
+            filterData.difficulty_levels.forEach(difficulty => {
+                difficultyDropdown.append(`<option value="${difficulty.id}">${difficulty.name}</option>`);
+            });
+        } else {
+            difficultyGroup.hide();
+        }
+    }
+    
+    // Populate age dropdown
+    function populateAgeDropdown() {
+        const ageDropdown = $('#ageDropdown');
+        const ageGroup = $('#ageGroup');
+        
+        if (filterData.filters && filterData.filters.age_filter && filterData.filters.age_filter.ages) {
+            ageGroup.show();
+            console.log('Populating age dropdown:', filterData.filters.age_filter.ages.length);
+            
+            filterData.filters.age_filter.ages.forEach(age => {
+                ageDropdown.append(`<option value="${age.id}">${age.name || age.value}</option>`);
+            });
+        } else {
+            ageGroup.hide();
+        }
+    }
+    
+    // Apply filters to calendar
+    function applyFiltersToCalendar() {
+        // Collect filter values from dropdowns
+        const filters = {};
+        
+        const locationValue = $('#locationDropdown').val();
+        if (locationValue) filters.locations = [locationValue];
+        
+        const activityValue = $('#activityDropdown').val();
+        if (activityValue) filters.activities = [activityValue];
+        
+        const difficultyValue = $('#difficultyDropdown').val();
+        if (difficultyValue) filters.difficulties = [difficultyValue];
+        
+        const ageValue = $('#ageDropdown').val();
+        if (ageValue) filters.ages = [ageValue];
+        
+        // Get availability filter
+        const availabilityValue = $('#availabilityDropdown').val();
+        
+        console.log('Applying filters:', filters, 'Availability:', availabilityValue);
+        
+        // Remove existing event sources to prevent duplicates
+        calendar.removeAllEventSources();
+        
+        // Create new event source with filters
+        calendar.addEventSource(function(fetchInfo, successCallback, failureCallback) {
+            loadEventsFromAPI(function(events) {
+                // Apply client-side availability filter if needed
+                let filteredEvents = events;
+                
+                if (availabilityValue) {
+                    filteredEvents = events.filter(event => {
+                        const availableSpots = event.extendedProps?.availableSpots || 0;
+                        if (availabilityValue === 'available' && availableSpots === 0) return false;
+                        if (availabilityValue === 'full' && availableSpots > 0) return false;
+                        return true;
+                    });
+                }
+                
+                console.log(`Applied filters, showing ${filteredEvents.length} events`);
+                successCallback(filteredEvents);
+            }, function(error) {
+                console.error('Error applying filters:', error);
+                failureCallback(error);
+            }, filters);
+        });
+    }
+    
+    // Force calendar height to fit content
+    function forceCalendarHeight() {
+        const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) return;
+        
+        // Remove any inline height styles
+        calendarEl.style.height = 'auto';
+        calendarEl.style.minHeight = 'auto';
+        
+        // Force all FullCalendar elements to auto height
+        const fcElements = calendarEl.querySelectorAll('.fc-view-harness, .fc-scrollgrid, .fc-scrollgrid-sync-table, .fc-daygrid, .fc-daygrid-body, .fc-daygrid-day, .fc-daygrid-day-frame');
+        fcElements.forEach(el => {
+            el.style.height = 'auto';
+            el.style.minHeight = 'auto';
+        });
+        
+        // Update calendar size
+        if (calendar) {
+            calendar.updateSize();
+        }
+    }
+    
+    // Get activity image from API data or fallback to visual system
+    function getActivityImage(activityData, activityName) {
+        let imageUrl = null;
+        
+        // Try to get real image from activity data
+        if (activityData) {
+            // First, try to get from main_media_path
+            if (activityData.main_media_path) {
+                // Construct full image URL
+                const baseDomain = exoclass_ajax.api_config.base_url.replace('/api/v1/en', '');
+                imageUrl = `${baseDomain}/${activityData.main_media_path}`;
+            }
+            // If no main_media_path, try images array
+            else if (activityData.images && Array.isArray(activityData.images) && activityData.images.length > 0) {
+                const firstImage = activityData.images[0];
+                if (firstImage.path) {
+                    const baseDomain = exoclass_ajax.api_config.base_url.replace('/api/v1/en', '');
+                    imageUrl = `${baseDomain}/${firstImage.path}`;
+                } else if (firstImage.url) {
+                    imageUrl = firstImage.url;
+                }
+            }
+        }
+        
+        // Get fallback visuals for gradient and icon
+        const fallbackVisuals = getActivityVisuals(activityName);
+        
+        return {
+            imageUrl: imageUrl,
+            gradient: fallbackVisuals.gradient,
+            icon: fallbackVisuals.icon
+        };
+    }
+    
+    // Get activity visuals (icon and gradient) based on activity name
+    function getActivityVisuals(activityName) {
+        if (!activityName) {
+            return {
+                icon: '💪',
+                gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+            };
+        }
+        
+        const name = activityName.toLowerCase();
+        
+        // Hip-Hop activities
+        if (name.includes('hip-hop') || name.includes('hip hop')) {
+            return {
+                icon: '🎤',
+                gradient: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)'
+            };
+        }
+        
+        // House activities  
+        if (name.includes('house')) {
+            return {
+                icon: '🏠',
+                gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+            };
+        }
+        
+        // Choreography activities
+        if (name.includes('choreo')) {
+            return {
+                icon: '💃',
+                gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'
+            };
+        }
+        
+        // Yoga/Pilates activities
+        if (name.includes('yoga') || name.includes('pilates')) {
+            return {
+                icon: '🧘',
+                gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+            };
+        }
+        
+        // Dance activities
+        if (name.includes('dance') || name.includes('zumba')) {
+            return {
+                icon: '💃',
+                gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'
+            };
+        }
+        
+        // Strength/Weight activities
+        if (name.includes('strength') || name.includes('weight') || name.includes('muscle') || name.includes('sculpt')) {
+            return {
+                icon: '🏋️',
+                gradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+            };
+        }
+        
+        // Cardio activities
+        if (name.includes('cardio') || name.includes('hiit') || name.includes('running') || name.includes('cycle')) {
+            return {
+                icon: '🔥',
+                gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+            };
+        }
+        
+        // Default fitness
+        return {
+            icon: '💪',
+            gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+        };
+    }
+    
+    // Helper function to generate dates relative to today
+    function getDateString(daysFromToday, hour = null, minute = null) {
+        var date = new Date();
+        date.setDate(date.getDate() + daysFromToday);
+        
+        if (hour !== null) {
+            date.setHours(hour, minute || 0, 0, 0);
+            return date.toISOString();
+        } else {
+            // Return date only (all day event)
+            return date.toISOString().split('T')[0];
+        }
+    }
+    
+})(jQuery); 
