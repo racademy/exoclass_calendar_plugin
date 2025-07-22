@@ -149,8 +149,8 @@ class ExoClassCalendar {
                     <div class="filter-group">
                         <select class="filter-dropdown" id="availabilityDropdown">
                             <option value=""><?php _e('Visos klasės', 'exoclass-calendar'); ?></option>
-                            <option value="available"><?php _e('Laisvos vietos', 'exoclass-calendar'); ?></option>
-                            <option value="full"><?php _e('Pilnos klasės', 'exoclass-calendar'); ?></option>
+                            <option value="available"><?php _e('Yra laisvų vietų', 'exoclass-calendar'); ?></option>
+                            <option value="full"><?php _e('Nėra laisvų vietų', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
                     
@@ -314,8 +314,10 @@ class ExoClassCalendar {
     }
     
     private function get_teacher_name($group) {
-        if (isset($group['staff']) && is_array($group['staff']) && !empty($group['staff'])) {
-            $teacher = $group['staff'][0];
+        // Check 'teachers' array first (this is what we found in the API)
+        if (isset($group['teachers']) && is_array($group['teachers']) && !empty($group['teachers'])) {
+            $teacher = $group['teachers'][0];
+            
             if (isset($teacher['name'])) {
                 return $teacher['name'];
             }
@@ -327,11 +329,27 @@ class ExoClassCalendar {
             }
         }
         
+        // Fallback to 'staff' array
+        if (isset($group['staff']) && is_array($group['staff']) && !empty($group['staff'])) {
+            $teacher = $group['staff'][0];
+            
+            if (isset($teacher['name'])) {
+                return $teacher['name'];
+            }
+            if (isset($teacher['first_name']) && isset($teacher['last_name'])) {
+                return $teacher['first_name'] . ' ' . $teacher['last_name'];
+            }
+            if (isset($teacher['first_name'])) {
+                return $teacher['first_name'];
+            }
+        }
+        
+        // Fallback to 'instructor' object
         if (isset($group['instructor']['name'])) {
             return $group['instructor']['name'];
         }
         
-        return __('Instruktorius', 'exoclass-calendar');
+        return __('Treneris', 'exoclass-calendar');
     }
 }
 

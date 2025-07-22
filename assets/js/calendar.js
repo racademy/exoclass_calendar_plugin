@@ -22,7 +22,6 @@
         var calendarEl = document.getElementById('calendar');
         
         if (!calendarEl) {
-            console.error('Calendar element not found');
             return;
         }
         
@@ -49,7 +48,6 @@
             
             // Events will be loaded from API
             events: function(fetchInfo, successCallback, failureCallback) {
-                console.log('Calendar requesting events for:', fetchInfo.start, 'to', fetchInfo.end);
                 loadEventsFromAPI(successCallback, failureCallback, {});
             },
             
@@ -73,12 +71,12 @@
                     
                     // Determine availability status
                     let spotsClass = 'available';
-                    let spotsText = 'Laisvos vietos';
+                    let spotsText = 'Yra laisvų vietų';
                     let statusClass = '';
                     
                     if (props.availableSpots === 0) {
                         spotsClass = 'full';
-                        spotsText = 'Pilna';
+                        spotsText = 'Nėra laisvų vietų';
                         statusClass = 'full';
                     } else if (props.availableSpots <= 3) {
                         spotsClass = 'limited';
@@ -118,7 +116,7 @@
                             <div class="event-main-content">
                                 <div class="event-time">${timeRange}</div>
                                 <div class="event-title" title="${event.title}">${displayTitle}</div>
-                                <div class="event-teacher">${props.teacher || 'Instruktorius'}</div>
+                                <div class="event-teacher">${props.teacher || 'Treneris'}</div>
                                 <div class="event-spots ${spotsClass}">
                                     <span class="spots-icon">👥</span>
                                     ${spotsText}
@@ -138,16 +136,15 @@
                     const groupKey = props.groupExternalKey || props.groupId;
                     const groupManagementUrl = `https://test.embed.exoclass.com/en/embed/provider/${API_CONFIG.provider_key}/group-management/${groupKey}`;
                     
-                    console.log('Opening group management:', groupManagementUrl);
                     // Open in new tab
                     window.open(groupManagementUrl, '_blank');
                 } else {
                     // Fallback to showing details if no group identifier
                     alert('Klasė: ' + info.event.title + '\n' +
-                          'Instruktorius: ' + props.teacher + '\n' +
+                          'Treneris: ' + props.teacher + '\n' +
                           'Laikas: ' + info.event.start.toLocaleString() + 
                           (info.event.end ? ' - ' + info.event.end.toLocaleTimeString() : '') + '\n' +
-                          'Laisvos vietos: ' + props.availableSpots + '/' + props.maxSpots);
+                          'Vietos: ' + props.availableSpots + '/' + props.maxSpots);
                 }
             },
             
@@ -158,7 +155,6 @@
             
             // Enable day clicking
             dateClick: function(info) {
-                console.log('Clicked on: ' + info.dateStr);
                 // You could add functionality to create new events here
             },
             
@@ -264,8 +260,6 @@
         showLoadingIndicator();
         
         try {
-            console.log('Loading filter data from APIs...');
-            
             const response = await $.ajax({
                 url: exoclass_ajax.ajax_url,
                 type: 'POST',
@@ -277,18 +271,10 @@
             
             if (response.success) {
                 filterData = response.data;
-                
-                console.log('Filter data loaded successfully:');
-                console.log('- Locations:', filterData.locations ? filterData.locations.length : 0);
-                console.log('- Activities:', filterData.activities ? filterData.activities.length : 0);
-                console.log('- Difficulty levels:', filterData.difficulty_levels ? filterData.difficulty_levels.length : 0);
-                console.log('Full filter data:', filterData);
-            } else {
-                console.error('Error loading filter data:', response.data);
             }
             
         } catch (error) {
-            console.error('Error loading filter data:', error);
+            // Error loading filter data
         } finally {
             hideLoadingIndicator();
         }
@@ -299,7 +285,6 @@
         try {
             // Show loading indicator
             showLoadingIndicator();
-            console.log('Loading classes from API...', filters);
             
             const response = await $.ajax({
                 url: exoclass_ajax.ajax_url,
@@ -313,7 +298,6 @@
             
             if (response.success) {
                 const events = response.data;
-                console.log(`Loaded ${events.length} events from API`);
                 
                 // Store original events for filtering
                 originalEvents = events.map(event => ({
@@ -328,7 +312,6 @@
                 hideLoadingIndicator();
                 
                 if (events.length === 0) {
-                    console.warn('No events found in API response, using fallback data');
                     const fallbackEvents = getFallbackEvents();
                     originalEvents = fallbackEvents;
                     successCallback(fallbackEvents);
@@ -340,7 +323,7 @@
             }
             
         } catch (error) {
-            console.error('Error loading events from API:', error);
+            // Error loading events from API
             
             // Hide loading indicator
             hideLoadingIndicator();
@@ -361,7 +344,6 @@
             
             $('.exoclass-calendar-container').prepend(errorDiv);
             
-            console.log('Falling back to sample data...');
             const fallbackEvents = getFallbackEvents();
             originalEvents = fallbackEvents;
             successCallback(fallbackEvents);
@@ -457,12 +439,9 @@
         const locationDropdown = $('#locationDropdown');
         
         if (filterData.locations && filterData.locations.length > 0) {
-            console.log('Populating location dropdown:', filterData.locations.length);
             filterData.locations.forEach(location => {
                 locationDropdown.append(`<option value="${location.id}">${location.name}</option>`);
             });
-        } else {
-            console.warn('No locations data available');
         }
     }
     
@@ -471,12 +450,9 @@
         const activityDropdown = $('#activityDropdown');
         
         if (filterData.activities && filterData.activities.length > 0) {
-            console.log('Populating activity dropdown:', filterData.activities.length);
             filterData.activities.forEach(activity => {
                 activityDropdown.append(`<option value="${activity.id}">${activity.name}</option>`);
             });
-        } else {
-            console.warn('No activities data available');
         }
     }
     
@@ -487,7 +463,6 @@
         
         if (filterData.difficulty_levels && filterData.difficulty_levels.length > 0) {
             difficultyGroup.show();
-            console.log('Populating difficulty dropdown:', filterData.difficulty_levels.length);
             
             filterData.difficulty_levels.forEach(difficulty => {
                 difficultyDropdown.append(`<option value="${difficulty.id}">${difficulty.name}</option>`);
@@ -504,7 +479,6 @@
         
         if (filterData.filters && filterData.filters.age_filter && filterData.filters.age_filter.ages) {
             ageGroup.show();
-            console.log('Populating age dropdown:', filterData.filters.age_filter.ages.length);
             
             filterData.filters.age_filter.ages.forEach(age => {
                 ageDropdown.append(`<option value="${age.id}">${age.name || age.value}</option>`);
@@ -534,8 +508,6 @@
         // Get availability filter
         const availabilityValue = $('#availabilityDropdown').val();
         
-        console.log('Applying filters:', filters, 'Availability:', availabilityValue);
-        
         // Remove existing event sources to prevent duplicates
         calendar.removeAllEventSources();
         
@@ -554,10 +526,8 @@
                     });
                 }
                 
-                console.log(`Applied filters, showing ${filteredEvents.length} events`);
                 successCallback(filteredEvents);
             }, function(error) {
-                console.error('Error applying filters:', error);
                 failureCallback(error);
             }, filters);
         });
