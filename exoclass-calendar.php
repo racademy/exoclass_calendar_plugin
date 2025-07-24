@@ -146,6 +146,12 @@ class ExoClassCalendar {
                         </select>
                     </div>
                     
+                    <div class="filter-group" id="teacherGroup">
+                        <select class="filter-dropdown" id="teacherDropdown">
+                            <option value=""><?php _e('Visi treneriai', 'exoclass-calendar'); ?></option>
+                        </select>
+                    </div>
+                    
                     <div class="filter-group">
                         <select class="filter-dropdown" id="availabilityDropdown">
                             <option value=""><?php _e('Visos klasės', 'exoclass-calendar'); ?></option>
@@ -223,6 +229,9 @@ class ExoClassCalendar {
         if (!empty($filters['ages'])) {
             $api_url .= '&ages=' . implode(',', $filters['ages']) . '&age_type=age';
         }
+        if (!empty($filters['teachers'])) {
+            $api_url .= '&teachers=' . implode(',', $filters['teachers']);
+        }
         
         $response = wp_remote_get($api_url);
         
@@ -291,6 +300,7 @@ class ExoClassCalendar {
             'locations' => '/provider/locations',
             'activities' => '/provider/activities',
             'difficulty_levels' => '/provider/group-difficulty-levels',
+            'teachers' => '/provider/teachers',
             'filters' => '/provider/embed/v2/filters'
         );
         
@@ -308,6 +318,11 @@ class ExoClassCalendar {
                     $filter_data[$key] = is_array($data) ? $data : (isset($data['data']) ? $data['data'] : array());
                 }
             }
+        }
+        
+        // TEMP: Output filter data for debugging
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('ExoClass Calendar Filter Data: ' . print_r($filter_data, true));
         }
         
         return $filter_data;

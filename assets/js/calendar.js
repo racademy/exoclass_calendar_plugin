@@ -402,9 +402,10 @@
         populateActivityDropdown(); 
         populateDifficultyDropdown();
         populateAgeDropdown();
+        populateTeacherDropdown(); // Add this line
         
         // Add change listeners to all filter dropdowns
-        const dropdowns = ['#locationDropdown', '#activityDropdown', '#difficultyDropdown', '#ageDropdown', '#availabilityDropdown'];
+        const dropdowns = ['#locationDropdown', '#activityDropdown', '#difficultyDropdown', '#ageDropdown', '#availabilityDropdown', '#teacherDropdown']; // Add teacherDropdown
         dropdowns.forEach(selector => {
             $(selector).on('change', function() {
                 // Auto-apply filters when dropdown changes
@@ -420,6 +421,7 @@
             $('#difficultyDropdown').val('');
             $('#ageDropdown').val('');
             $('#availabilityDropdown').val('');
+            $('#teacherDropdown').val(''); // Add this line
             
             // Remove existing event sources and reload without filters
             calendar.removeAllEventSources();
@@ -487,6 +489,23 @@
             ageGroup.hide();
         }
     }
+
+    // Populate teacher dropdown
+    function populateTeacherDropdown() {
+        const teacherDropdown = $('#teacherDropdown');
+        const teacherGroup = $('#teacherGroup');
+        
+        if (filterData.teachers && filterData.teachers.length > 0) {
+            teacherGroup.show();
+            
+            filterData.teachers.forEach(teacher => {
+                const teacherName = teacher.first_name + (teacher.last_name ? ' ' + teacher.last_name : '');
+                teacherDropdown.append(`<option value="${teacher.id}">${teacherName}</option>`);
+            });
+        } else {
+            teacherGroup.hide();
+        }
+    }
     
     // Apply filters to calendar
     function applyFiltersToCalendar() {
@@ -504,6 +523,9 @@
         
         const ageValue = $('#ageDropdown').val();
         if (ageValue) filters.ages = [ageValue];
+        
+        const teacherValue = $('#teacherDropdown').val();
+        if (teacherValue) filters.teachers = [teacherValue];
         
         // Get availability filter
         const availabilityValue = $('#availabilityDropdown').val();
