@@ -181,6 +181,41 @@ class ExoClassCalendar {
             <div class="calendar-container">
                 <div id='calendar' style="height: <?php echo esc_attr($atts['height']); ?>;"></div>
             </div>
+
+            <!-- Event Details Modal -->
+            <div id="eventDetailsModal" class="event-modal">
+                <div class="event-modal-content">
+                    <div class="event-modal-header">
+                        <span class="close-modal">&times;</span>
+                        <div class="event-modal-image"></div>
+                        <h2 class="event-modal-title"></h2>
+                    </div>
+                    <div class="event-modal-body">
+                        <div class="event-modal-info">
+                            <div class="info-row">
+                                <span class="info-label">🕒 <?php _e('Laikas', 'exoclass-calendar'); ?>:</span>
+                                <span class="event-time"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">👤 <?php _e('Treneris', 'exoclass-calendar'); ?>:</span>
+                                <span class="event-teacher"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">👥 <?php _e('Laisvos vietos', 'exoclass-calendar'); ?>:</span>
+                                <span class="event-spots"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">🎯 <?php _e('Lygis', 'exoclass-calendar'); ?>:</span>
+                                <span class="event-difficulty"></span>
+                            </div>
+                        </div>
+                        <div class="event-modal-description"></div>
+                        <div class="event-modal-actions">
+                            <a href="#" class="register-button" target="_blank"><?php _e('Registruotis', 'exoclass-calendar'); ?></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php
         return ob_get_clean();

@@ -51,7 +51,7 @@
                 loadEventsFromAPI(successCallback, failureCallback, {});
             },
             
-                            // Custom event content rendering
+            // Custom event content rendering
                 eventContent: function(arg) {
                     let event = arg.event;
                     let props = event.extendedProps;
@@ -128,24 +128,78 @@
                     return { html: html };
                 },
             
-            // Event interaction - open group management page
+            // Event interaction - show modal with event details
             eventClick: function(info) {
-                let props = info.event.extendedProps;
+                const event = info.event;
+                const props = event.extendedProps;
+                const $modal = $('#eventDetailsModal');
+                
+                if (!$modal.length) {
+                    console.error('Modal element not found');
+                    return;
+                }
+                
+                // Format time for Lithuanian locale
+                const startTime = event.start.toLocaleTimeString('lt-LT', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    timeZone: 'Europe/Vilnius'
+                });
+                const endTime = event.end ? event.end.toLocaleTimeString('lt-LT', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    timeZone: 'Europe/Vilnius'
+                }) : '';
+                const timeRange = startTime + (endTime ? ' - ' + endTime : '');
+                
+                // Get activity image or fallback
+                const { imageUrl, gradient } = getActivityImage(props.activityData, props.activityName);
+                
+                // Update modal content
+                $modal.find('.event-modal-image').css({
+                    'background-image': imageUrl ? `url('${imageUrl}')` : 'none',
+                    'background': imageUrl ? `url('${imageUrl}') center/cover` : gradient
+                });
+                
+                $modal.find('.event-modal-title').text(event.title);
+                $modal.find('.event-time').text(timeRange);
+                $modal.find('.event-teacher').text(props.teacher || 'Treneris');
+                
+                // Update spots information
+                const spotsText = props.availableSpots === 0 ? 
+                    'Nėra laisvų vietų' : 
+                    `${props.availableSpots}/${props.maxSpots} laisvų vietų`;
+                $modal.find('.event-spots').text(spotsText);
+                
+                // Update difficulty level
+                $modal.find('.event-difficulty').text(props.difficulty || 'Nenurodytas');
+                
+                // Update description if available
+                const $descriptionEl = $modal.find('.event-modal-description');
+                if (props.activityData && props.activityData.description) {
+                    $descriptionEl.html(props.activityData.description);
+                    $descriptionEl.show();
+                } else {
+                    $descriptionEl.hide();
+                }
+                
+                // Update registration button
+                const $registerButton = $modal.find('.register-button');
                 if (props.groupExternalKey || props.groupId) {
-                    // Use external_key if available, otherwise fall back to groupId
                     const groupKey = props.groupExternalKey || props.groupId;
                     const groupManagementUrl = `https://test.embed.exoclass.com/en/embed/provider/${API_CONFIG.provider_key}/group-management/${groupKey}`;
-                    
-                    // Open in new tab
-                    window.open(groupManagementUrl, '_blank');
+                    $registerButton.attr('href', groupManagementUrl);
+                    $registerButton.show();
                 } else {
-                    // Fallback to showing details if no group identifier
-                    alert('Klasė: ' + info.event.title + '\n' +
-                          'Treneris: ' + props.teacher + '\n' +
-                          'Laikas: ' + info.event.start.toLocaleString() + 
-                          (info.event.end ? ' - ' + info.event.end.toLocaleTimeString() : '') + '\n' +
-                          'Vietos: ' + props.availableSpots + '/' + props.maxSpots);
+                    $registerButton.hide();
                 }
+                
+                // Show modal with animation
+                $modal.addClass('show');
+                $modal.find('.event-modal-content').addClass('modal-animate-in');
+                
+                // Prevent body scrolling when modal is open
+                $('body').css('overflow', 'hidden');
             },
             
             // Customize day headers
@@ -193,6 +247,35 @@
                 forceCalendarHeight();
             }, 200);
         });
+
+        // Modal close handlers
+        // Using event delegation for the close button
+        $(document).on('click', '#eventDetailsModal .close-modal', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal();
+        });
+        
+        // Click outside modal handler
+        $(document).on('click', '#eventDetailsModal', function(e) {
+            if ($(e.target).is('#eventDetailsModal')) {
+                closeModal();
+            }
+        });
+        
+        // Close modal with escape key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && $('#eventDetailsModal').hasClass('show')) {
+                closeModal();
+            }
+        });
+        
+        function closeModal() {
+            const $modal = $('#eventDetailsModal');
+            $modal.removeClass('show');
+            $('body').css('overflow', '');
+            $modal.find('.event-modal-content').removeClass('modal-animate-in');
+        }
     });
     
 
@@ -697,6 +780,37 @@
             // Return date only (all day event)
             return date.toISOString().split('T')[0];
         }
+    }
+    
+    // Modal close handlers
+    const $modal = $('#eventDetailsModal');
+    const $closeBtn = $modal.find('.close-modal');
+    
+    // Close button click handler
+    $closeBtn.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal();
+    });
+    
+    // Click outside modal handler
+    $modal.on('click', function(e) {
+        if ($(e.target).is($modal)) {
+            closeModal();
+        }
+    });
+    
+    // Close modal with escape key
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' && $modal.hasClass('show')) {
+            closeModal();
+        }
+    });
+    
+    function closeModal() {
+        $modal.removeClass('show');
+        $('body').css('overflow', '');
+        $modal.find('.event-modal-content').removeClass('modal-animate-in');
     }
     
 })(jQuery); 
