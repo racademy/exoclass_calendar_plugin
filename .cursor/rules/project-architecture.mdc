@@ -1,0 +1,69 @@
+---
+description: ExoClass Calendar Plugin project architecture and file organization
+globs: []
+alwaysApply: true
+---
+
+# ExoClass Calendar Plugin Architecture
+
+## Project Overview
+This is a WordPress plugin that integrates with ExoClass API to display fitness classes in a calendar format with advanced filtering capabilities.
+
+## Directory Structure
+```
+exoclass-calendar/
+├── exoclass-calendar.php          # Main plugin file with class initialization
+├── uninstall.php                  # Clean uninstall procedures
+├── includes/
+│   └── admin-settings.php         # WordPress admin interface
+├── assets/
+│   ├── css/
+│   │   └── calendar.css           # All calendar styling
+│   └── js/
+│       └── calendar.js            # Frontend calendar functionality
+├── README.md                      # Project documentation
+└── .cursor/                       # Cursor IDE configuration
+    └── rules/                     # Development rules and standards
+```
+
+## Key Components
+
+### Main Plugin Class (ExoClassCalendar)
+- Handles WordPress hooks and shortcode registration
+- Manages AJAX endpoints for API communication
+- Enqueues scripts and styles conditionally
+
+### Admin Settings
+- WordPress admin interface for plugin configuration
+- API endpoint and provider key management
+- Plugin settings and customization options
+
+### Frontend Calendar
+- FullCalendar.js integration with custom event rendering
+- Real-time filtering by location, activity, age group, difficulty
+- Responsive design for mobile and desktop
+- Lithuanian localization support
+
+### API Integration
+- Server-side proxy for ExoClass API calls
+- Data transformation and caching
+- Error handling and fallback mechanisms
+
+## Development Workflow
+1. Test changes locally using WordPress development environment
+2. Validate API integration with ExoClass test endpoints
+3. Ensure mobile responsiveness across devices
+4. Verify Lithuanian localization and timezone handling
+5. Test plugin activation/deactivation procedures
+
+## Key Dependencies
+- **WordPress**: Core platform (5.0+)
+- **FullCalendar.js**: Calendar display library
+- **jQuery**: JavaScript interactions (WordPress default)
+- **ExoClass API**: External data source
+
+## Deployment Considerations
+- Plugin should work with standard WordPress hosting
+- No special server requirements beyond WordPress
+- Compatible with common WordPress themes
+- Follows WordPress plugin directory standards

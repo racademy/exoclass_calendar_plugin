@@ -1,0 +1,49 @@
+---
+description: WordPress plugin development standards for ExoClass Calendar
+globs: ["*.php", "includes/**/*.php"]
+alwaysApply: true
+---
+
+# WordPress Plugin Development Standards
+
+## Core Principles
+- Follow WordPress coding standards and best practices
+- Use proper WordPress hooks and filters
+- Ensure security with nonce verification and data sanitization
+- Maintain compatibility with WordPress core updates
+
+## Plugin Structure Guidelines
+- Main plugin file should contain plugin header and class initialization
+- Use includes/ directory for additional PHP files
+- Define constants for plugin paths and URLs
+- Include uninstall.php for clean plugin removal
+
+## Security Requirements
+- Always escape output with appropriate WordPress functions (esc_html, esc_attr, esc_url)
+- Sanitize input data using sanitize_text_field, sanitize_email, etc.
+- Use wp_nonce_field() and wp_verify_nonce() for form submissions
+- Check user capabilities before allowing actions
+
+## AJAX Implementation
+- Register AJAX actions for both logged-in and non-logged-in users when needed
+- Use wp_ajax_ and wp_ajax_nopriv_ hooks
+- Return proper JSON responses using wp_send_json_success() and wp_send_json_error()
+- Validate nonces in AJAX handlers
+
+## Code Organization
+- Use classes for main plugin functionality
+- Group related functions together
+- Add proper PHPDoc comments for all functions and methods
+- Use descriptive variable and function names
+
+## WordPress Standards
+- Use WordPress database abstraction layer ($wpdb) for database operations
+- Leverage WordPress options API for storing plugin settings
+- Use WordPress transients for caching API responses
+- Follow WordPress file naming conventions (lowercase with hyphens)
+
+## Error Handling
+- Use WordPress error handling (WP_Error class) when appropriate
+- Log errors using error_log() for debugging
+- Provide user-friendly error messages
+- Handle API failures gracefully with fallbacks

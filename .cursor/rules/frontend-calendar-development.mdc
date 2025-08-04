@@ -1,0 +1,72 @@
+---
+description: Frontend calendar development standards using FullCalendar.js
+globs: ["assets/**/*.js", "assets/**/*.css", "*.html"]
+alwaysApply: false
+---
+
+# Frontend Calendar Development Standards
+
+## FullCalendar.js Integration
+- Use version-specific CDN links for consistency
+- Initialize calendar with proper Lithuanian locale settings
+- Implement custom event rendering for ExoClass activities
+- Use proper event click handlers for navigation
+
+## Event Display Standards
+- Show activity type with proper icons and gradients
+- Display availability status (Available, Limited, Full)
+- Include teacher/instructor information
+- Format times according to Lithuanian standards (24-hour format)
+
+## Responsive Design Requirements
+- Mobile-first CSS approach
+- Touch-friendly interface elements
+- Flexible grid layouts that adapt to screen sizes
+- Proper font scaling for readability
+
+## CSS Organization
+```css
+/* Use BEM methodology for class naming */
+.calendar-container__event-card--available {
+    /* styles */
+}
+
+/* Mobile-first responsive breakpoints */
+@media (min-width: 768px) {
+    /* Tablet styles */
+}
+
+@media (min-width: 1024px) {
+    /* Desktop styles */
+}
+```
+
+## JavaScript Patterns
+- Use modern ES6+ syntax when supported
+- Implement proper error handling for all async operations
+- Use event delegation for dynamic content
+- Maintain clean separation between calendar logic and API calls
+
+## Filtering Implementation
+- Implement real-time filtering without page reload
+- Use URL parameters to maintain filter state
+- Provide clear visual feedback for active filters
+- Ensure filters work on mobile devices
+
+## Accessibility Standards
+- Use proper ARIA labels for interactive elements
+- Ensure keyboard navigation works for all features
+- Maintain proper color contrast ratios
+- Provide alternative text for activity icons
+
+## Performance Optimization
+- Minimize DOM manipulation during calendar updates
+- Use CSS transforms for animations instead of changing layout properties
+- Implement efficient event filtering algorithms
+- Lazy load non-critical calendar features
+
+## Browser Compatibility
+- Test on Chrome, Firefox, Safari, and Edge
+- Provide fallbacks for older browsers (IE11+)
+- Use progressive enhancement approach
+- Validate with real mobile devices

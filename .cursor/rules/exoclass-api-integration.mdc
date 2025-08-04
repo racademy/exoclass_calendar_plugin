@@ -1,0 +1,60 @@
+---
+description: ExoClass API integration guidelines and standards
+globs: ["**/calendar.js", "**/exoclass-calendar.php"]
+alwaysApply: false
+---
+
+# ExoClass API Integration Guidelines
+
+## API Configuration
+- Base URL: `https://test.api.exoclass.com/api/v1/en`
+- Provider Key: `af6791ea-6262-4705-a78c-b7fdc52aec6a`
+- Always use proper error handling for API calls
+
+## Endpoint Usage
+- `/providers/{providerKey}/groups` - Get group/class data
+- `/providers/{providerKey}/activities` - Get activity types for filtering
+- `/providers/{providerKey}/locations` - Get location data for filtering
+
+## Data Handling
+- Cache API responses using WordPress transients (15-minute expiration recommended)
+- Transform API data to match FullCalendar.js event format
+- Handle timezone conversion properly (Lithuania timezone: Europe/Vilnius)
+- Sanitize all API response data before use
+
+## Error Handling Patterns
+```javascript
+// Frontend error handling
+.catch(error => {
+    console.error('API Error:', error);
+    // Show user-friendly message
+    // Fall back to cached data if available
+});
+```
+
+```php
+// Backend error handling
+$response = wp_remote_get($url);
+if (is_wp_error($response)) {
+    error_log('ExoClass API Error: ' . $response->get_error_message());
+    return new WP_Error('api_error', 'Failed to fetch data');
+}
+```
+
+## Performance Optimization
+- Use WordPress transients for caching API responses
+- Implement lazy loading for non-critical data
+- Minimize API calls by batching requests when possible
+- Use proper cache invalidation strategies
+
+## Security Considerations
+- Validate all API responses before processing
+- Never expose API keys in frontend JavaScript
+- Use server-side proxy for sensitive API operations
+- Sanitize all data received from API before display
+
+## Lithuanian Localization
+- Format dates using Lithuanian locale
+- Display times in Europe/Vilnius timezone
+- Use proper Lithuanian day/month names
+- Handle Lithuanian character encoding properly

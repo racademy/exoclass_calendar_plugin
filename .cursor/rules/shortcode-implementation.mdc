@@ -1,0 +1,78 @@
+---
+description: WordPress shortcode implementation guidelines for ExoClass Calendar
+globs: ["**/exoclass-calendar.php"]
+alwaysApply: false
+---
+
+# Shortcode Implementation Guidelines
+
+## Basic Shortcode Usage
+The plugin provides the `[exoclass_calendar]` shortcode for embedding calendars.
+
+## Supported Attributes
+- `height`: Set calendar container height (default: "auto")
+- `aspect_ratio`: Set calendar aspect ratio (default: "1.8")
+- `filter_location`: Pre-filter by location ID
+- `filter_activity`: Pre-filter by activity ID
+- `filter_teacher`: Pre-filter by teacher ID
+- `filter_level`: Pre-filter by difficulty level ID
+- `filter_availability`: Pre-filter by availability ('available', 'full')
+
+## Implementation Pattern
+```php
+public function calendar_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'height' => 'auto',
+        'aspect_ratio' => '1.8',
+        'filter_location' => '',
+        'filter_activity' => '',
+        'filter_teacher' => '',
+        'filter_level' => '',
+        'filter_availability' => ''
+    ), $atts, 'exoclass_calendar');
+    
+    // Sanitize attributes
+    $height = sanitize_text_field($atts['height']);
+    $aspect_ratio = floatval($atts['aspect_ratio']);
+    
+    // Generate unique container ID
+    $container_id = 'exoclass-calendar-' . uniqid();
+    
+    // Return HTML with proper escaping
+    return sprintf(
+        '<div id="%s" class="exoclass-calendar-container" data-height="%s" data-aspect-ratio="%.1f"></div>',
+        esc_attr($container_id),
+        esc_attr($height),
+        $aspect_ratio
+    );
+}
+```
+
+## Security Requirements
+- Sanitize all shortcode attributes before use
+- Use proper escaping for HTML output
+- Validate numeric values within acceptable ranges
+- Generate unique IDs to avoid conflicts
+
+## Script Enqueueing Strategy
+- Only enqueue calendar assets when shortcode is present on page
+- Use conditional loading to improve performance
+- Pass configuration data via wp_localize_script()
+
+## Error Handling
+- Provide fallback content if calendar fails to load
+- Display user-friendly messages for configuration errors
+- Log errors for debugging without exposing to users
+
+## Multiple Instance Support
+- Generate unique container IDs for each shortcode instance
+- Support multiple calendars on the same page
+- Ensure proper cleanup of event listeners
+
+## Usage Examples
+```
+[exoclass_calendar]
+[exoclass_calendar height="500px" filter_location="123"]
+[exoclass_calendar filter_activity="456" filter_availability="available"]
+[exoclass_calendar filter_teacher="789" filter_level="234" height="600px"]
+```
