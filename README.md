@@ -40,6 +40,18 @@ You can customize the calendar with parameters:
 **Available Parameters:**
 - `height`: Set the calendar height (default: "auto")
 - `aspect_ratio`: Set the aspect ratio (default: "1.8")
+- `filter_location`: Pre-filter by location ID
+- `filter_activity`: Pre-filter by activity ID  
+- `filter_teacher`: Pre-filter by teacher ID
+- `filter_level`: Pre-filter by difficulty level ID
+- `filter_availability`: Pre-filter by availability ('available', 'full')
+
+**Filter Examples:**
+```
+[exoclass_calendar filter_location="123"]
+[exoclass_calendar filter_activity="456" filter_availability="available"]
+[exoclass_calendar filter_teacher="789" filter_level="234" height="600px"]
+```
 
 ## Configuration
 

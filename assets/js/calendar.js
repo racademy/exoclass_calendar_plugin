@@ -78,9 +78,9 @@
                         spotsClass = 'full';
                         spotsText = 'Nėra laisvų vietų';
                         statusClass = 'full';
-                    } else if (props.availableSpots <= 3) {
+                    } else if (props.availableSpots < 4) {
                         spotsClass = 'limited';
-                        spotsText = 'Ribotos vietos';
+                        spotsText = `Liko ${props.availableSpots} vietos`;
                         statusClass = 'limited';
                     }
                     
@@ -166,9 +166,14 @@
                 $modal.find('.event-teacher').text(props.teacher || 'Treneris');
                 
                 // Update spots information
-                const spotsText = props.availableSpots === 0 ? 
-                    'Nėra laisvų vietų' : 
-                    `${props.availableSpots}/${props.maxSpots} laisvų vietų`;
+                let spotsText;
+                if (props.availableSpots === 0) {
+                    spotsText = 'Nėra laisvų vietų';
+                } else if (props.availableSpots < 4) {
+                    spotsText = `Liko ${props.availableSpots} vietos`;
+                } else {
+                    spotsText = 'Yra laisvų vietų';
+                }
                 $modal.find('.event-spots').text(spotsText);
                 
                 // Update difficulty level
@@ -241,6 +246,7 @@
         // Load filter data and initialize filters
         loadFilterData().then(() => {
             initializeFilters();
+            applyInitialFilters(); // Apply initial filters from shortcode
             setupEventHoverEffects();
             // Force resize again after data loads
             setTimeout(() => {
@@ -811,6 +817,35 @@
         $modal.removeClass('show');
         $('body').css('overflow', '');
         $modal.find('.event-modal-content').removeClass('modal-animate-in');
+    }
+    
+    // Apply initial filters from shortcode attributes
+    function applyInitialFilters() {
+        if (exoclass_ajax.initial_filters) {
+            const filters = exoclass_ajax.initial_filters;
+            
+            // Set dropdown values based on initial filters
+            if (filters.location) {
+                $('#locationDropdown').val(filters.location);
+            }
+            if (filters.activity) {
+                $('#activityDropdown').val(filters.activity);
+            }
+            if (filters.teacher) {
+                $('#teacherDropdown').val(filters.teacher);
+            }
+            if (filters.level) {
+                $('#difficultyDropdown').val(filters.level);
+            }
+            if (filters.availability) {
+                $('#availabilityDropdown').val(filters.availability);
+            }
+            
+            // Apply the filters if any are set
+            if (filters.location || filters.activity || filters.teacher || filters.level || filters.availability) {
+                applyFiltersToCalendar();
+            }
+        }
     }
     
 })(jQuery); 

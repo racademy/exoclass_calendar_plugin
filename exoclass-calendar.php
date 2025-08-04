@@ -102,7 +102,14 @@ class ExoClassCalendar {
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('exoclass_calendar_nonce'),
             'api_config' => $api_config,
-            'show_images' => !empty($atts) ? filter_var($atts['show_images'], FILTER_VALIDATE_BOOLEAN) : true
+            'show_images' => !empty($atts) ? filter_var($atts['show_images'], FILTER_VALIDATE_BOOLEAN) : true,
+            'initial_filters' => array(
+                'location' => !empty($atts['filter_location']) ? sanitize_text_field($atts['filter_location']) : '',
+                'activity' => !empty($atts['filter_activity']) ? sanitize_text_field($atts['filter_activity']) : '',
+                'teacher' => !empty($atts['filter_teacher']) ? sanitize_text_field($atts['filter_teacher']) : '',
+                'level' => !empty($atts['filter_level']) ? sanitize_text_field($atts['filter_level']) : '',
+                'availability' => !empty($atts['filter_availability']) ? sanitize_text_field($atts['filter_availability']) : ''
+            )
         ));
     }
     
@@ -110,7 +117,12 @@ class ExoClassCalendar {
         $display_config = ExoClassCalendarAdmin::get_display_config();
         $atts = shortcode_atts(array(
             'height' => $display_config['default_height'],
-            'show_images' => 'true'
+            'show_images' => 'true',
+            'filter_location' => '',
+            'filter_activity' => '',
+            'filter_teacher' => '',
+            'filter_level' => '',
+            'filter_availability' => ''
         ), $atts, 'exoclass_calendar');
         
         // Enqueue assets with attributes
