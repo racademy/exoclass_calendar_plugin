@@ -3,7 +3,7 @@
  * Plugin Name: ExoClass Calendar
  * Plugin URI: https://exoclass.io
  * Description: A beautiful calendar plugin for displaying fitness classes and activities from ExoClass API with filtering capabilities.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Bright Projects
  * Author URI: https://brightprojects.io
  * License: GPL v2 or later
@@ -18,12 +18,15 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('EXOCLASS_CALENDAR_VERSION', '1.1.0');
+define('EXOCLASS_CALENDAR_VERSION', '1.2.0');
 define('EXOCLASS_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EXOCLASS_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
 // Include admin settings
 require_once EXOCLASS_CALENDAR_PLUGIN_PATH . 'includes/admin-settings.php';
+
+// Include update handler
+require_once EXOCLASS_CALENDAR_PLUGIN_PATH . 'includes/update.php';
 
 class ExoClassCalendar {
     
@@ -35,11 +38,21 @@ class ExoClassCalendar {
         add_action('wp_ajax_exoclass_get_filters', array($this, 'ajax_get_filters'));
         add_action('wp_ajax_nopriv_exoclass_get_filters', array($this, 'ajax_get_filters'));
         add_shortcode('exoclass_calendar', array($this, 'calendar_shortcode'));
+        
+        // Initialize updater
+        $this->init_updater();
     }
     
     public function init() {
         // Load text domain for translations
         load_plugin_textdomain('exoclass-calendar', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    }
+    
+    public function init_updater() {
+        // Initialize the updater with GitHub repository info
+        if (class_exists('ExoClassCalendar_Updater')) {
+            new ExoClassCalendar_Updater(__FILE__, EXOCLASS_CALENDAR_VERSION, 'racademy', 'exoclass_calendar_plugin');
+        }
     }
     
     public function enqueue_scripts() {
