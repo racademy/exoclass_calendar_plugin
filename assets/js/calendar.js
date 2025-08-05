@@ -181,11 +181,80 @@
                 
                 // Update description if available
                 const $descriptionEl = $modal.find('.event-modal-description');
+                const $descriptionContent = $modal.find('.description-content');
+                const $descriptionReadMore = $modal.find('.description-read-more');
+                
                 if (props.activityData && props.activityData.description) {
-                    $descriptionEl.html(props.activityData.description);
+                    $descriptionContent.html(props.activityData.description);
                     $descriptionEl.show();
+                    
+                    // Calculate dynamic max height based on iframe
+                    setTimeout(() => {
+                        const $iframe = $descriptionContent.find('iframe');
+                        const iframeHeight = $iframe.outerHeight() || 0;
+                        const textHeight = $descriptionContent.find('p, div:not(:has(iframe))').outerHeight() || 0;
+                        
+                        // Calculate dynamic max height: iframe height + text height + some padding
+                        let dynamicMaxHeight = iframeHeight + textHeight + 100; // 50px padding
+                        
+                        // Minimum height of 200px, maximum of 400px
+                        dynamicMaxHeight = Math.max(250, Math.min(550, dynamicMaxHeight));
+                        
+                        // Set the dynamic max height via CSS
+                        $descriptionContent.css('max-height', dynamicMaxHeight + 'px');
+                        
+                        // Check if we need read more button
+                        const contentHeight = $descriptionContent[0].scrollHeight;
+                        
+                        if (contentHeight > dynamicMaxHeight) {
+                            $descriptionReadMore.show();
+                        } else {
+                            $descriptionReadMore.hide();
+                        }
+                    }, 200); // Longer delay to ensure iframe is fully loaded
                 } else {
                     $descriptionEl.hide();
+                }
+                
+                // Update teacher information if available
+                const $teacherInfo = $modal.find('.event-modal-teacher-info');
+                const $teacherDescriptionContent = $modal.find('.teacher-description-content');
+                const $readMoreBtn = $modal.find('.read-more-btn');
+                
+                if (props.teacherData) {
+                    // Create teacher description from available data
+                    let teacherDescription = '';
+                    
+                    // Check for employee_provider description (rich teacher bio)
+                    if (props.teacherData.employee_provider && props.teacherData.employee_provider.description) {
+                        teacherDescription = props.teacherData.employee_provider.description;
+                    } else if (props.teacherData.bio) {
+                        teacherDescription = props.teacherData.bio;
+                    } else if (props.teacherData.description) {
+                        teacherDescription = props.teacherData.description;
+                    } else {
+                        // Create a basic description from available info
+                        const teacherName = props.teacher || 'Treneris';
+                        teacherDescription = `${teacherName} yra patyręs ir kvalifikuotas treneris, specializuojantis šioje veikloje.`;
+                    }
+                    
+                    if (teacherDescription) {
+                        // Set the full description
+                        $teacherDescriptionContent.html(teacherDescription);
+                        
+                        // Show/hide read more button based on content length
+                        if (teacherDescription.length > 200) {
+                            $readMoreBtn.show();
+                        } else {
+                            $readMoreBtn.hide();
+                        }
+                        
+                        $teacherInfo.show();
+                    } else {
+                        $teacherInfo.hide();
+                    }
+                } else {
+                    $teacherInfo.hide();
                 }
                 
                 // Update registration button
@@ -859,5 +928,35 @@
             }
         }
     }
+    
+    // Simple read more functionality for teacher description
+    $(document).on('click', '.read-more-btn', function() {
+        const $btn = $(this);
+        
+        // Check if it's for teacher description or event description
+        if ($btn.hasClass('description-read-more')) {
+            // Handle event description
+            const $desc = $btn.siblings('.description-content');
+            
+            if ($desc.hasClass('expanded')) {
+                $desc.removeClass('expanded');
+                $btn.text('Skaityti daugiau');
+            } else {
+                $desc.addClass('expanded');
+                $btn.text('Rodyti mažiau');
+            }
+        } else {
+            // Handle teacher description
+            const $desc = $btn.siblings('.teacher-description');
+            
+            if ($desc.hasClass('expanded')) {
+                $desc.removeClass('expanded');
+                $btn.text('Skaityti daugiau');
+            } else {
+                $desc.addClass('expanded');
+                $btn.text('Rodyti mažiau');
+            }
+        }
+    });
     
 })(jQuery); 

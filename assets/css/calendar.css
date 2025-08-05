@@ -865,10 +865,65 @@ th.fc-day-today {
 }
 
 .event-modal-description {
-    margin-bottom: 70px;
+    margin-bottom: 20px;
     font-size: 14px;
     line-height: 1.6;
     color: #333;
+}
+
+.event-modal-teacher-info {
+    margin-bottom: 80px;
+}
+
+.event-modal-teacher-info h2 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+}
+
+.teacher-description {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #555;
+}
+
+.teacher-description {
+    max-height: 77px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.teacher-description.expanded {
+    max-height: max-content;
+}
+
+.read-more-btn {
+    background: none;
+    border: none;
+    color: #FA6418;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 5px 0;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.read-more-btn:hover {
+    color: #000000;
+}
+
+.description-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.description-content.expanded {
+    max-height: max-content !important;
+}
+
+.description-read-more {
+    display: none;
 }
 
 .event-modal-actions {

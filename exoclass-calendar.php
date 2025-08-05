@@ -234,7 +234,16 @@ class ExoClassCalendar {
                                 <span class="event-difficulty"></span>
                             </div>
                         </div>
-                        <div class="event-modal-description"></div>
+                        <div class="event-modal-description">
+                            <div class="description-content"></div>
+                            <button class="read-more-btn description-read-more"><?php _e('Skaityti daugiau', 'exoclass-calendar'); ?></button>
+                        </div>
+                        <div class="event-modal-teacher-info" style="display: none;">
+                            <div class="teacher-description">
+                                <div class="teacher-description-content"></div>
+                            </div>
+                            <button class="read-more-btn"><?php _e('Skaityti daugiau', 'exoclass-calendar'); ?></button>
+                        </div>
                         <div class="event-modal-actions">
                             <a href="#" class="register-button" target="_blank"><?php _e('Registruotis', 'exoclass-calendar'); ?></a>
                         </div>
@@ -336,6 +345,7 @@ class ExoClassCalendar {
                         'end' => $session['end_time'],
                         'extendedProps' => array(
                             'teacher' => $teacher,
+                            'teacherData' => $this->get_teacher_data($group),
                             'availableSpots' => $available_spots,
                             'maxSpots' => $max_spots,
                             'activityName' => $activity_name,
@@ -425,6 +435,23 @@ class ExoClassCalendar {
         }
         
         return __('Treneris', 'exoclass-calendar');
+    }
+    
+    private function get_teacher_data($group) {
+        // Try to get teacher info from the 'teachers' array
+        if (isset($group['teachers']) && is_array($group['teachers']) && !empty($group['teachers'])) {
+            $teacher = $group['teachers'][0];
+            // Return the whole teacher array (contains bio/description if available)
+            return $teacher;
+        }
+        // Fallbacks if needed
+        if (isset($group['staff']) && is_array($group['staff']) && !empty($group['staff'])) {
+            return $group['staff'][0];
+        }
+        if (isset($group['instructor'])) {
+            return $group['instructor'];
+        }
+        return null;
     }
 }
 

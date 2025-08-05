@@ -1,5 +1,28 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.2.1] - 2025-08-05
+### Pridėta
+- Event details modal su išsamiu informacijos rodymu
+- Teacher dropdown filtras kalendoriuje
+- Teacher informacijos rodymas event modal'e
+- "Read more" funkcionalumas teacher aprašymui
+- "Read more" funkcionalumas event aprašymui su YouTube iframe palaikymu
+- Dinaminis iframe aukščio skaičiavimas modal'e
+- Address rodymas vietoj dance hall pavadinimo location dropdown'e
+- Address trumpinimas (pašalintas šalis ir pašto kodas, palikta miesto pavadinimas)
+
+### Pakeista
+- Event click elgsena: dabar atidaro modal vietoj tiesioginio nukreipimo
+- Teacher aprašymo stilius: pašalintas background ir border
+- Teacher aprašymo pozicija: dabar rodomas po event aprašymo
+- Location dropdown: dabar rodo adresą vietoj dance hall pavadinimo
+- Teacher dropdown: pridėtas naujas filtras kalendoriuje
+
+### Pataisyta
+- Modal close button funkcionalumas
+- Teacher aprašymo "read more" mygtuko pozicija
+- Dinaminis iframe aukščio skaičiavimas modal'e
+
 ## [1.2.0] - 2024-01-16
 ### Pridėta
 - Pilna GitHub releases integracija automatiniams atnaujinimams
