@@ -192,7 +192,7 @@
                 const $registerButton = $modal.find('.register-button');
                 if (props.groupExternalKey || props.groupId) {
                     const groupKey = props.groupExternalKey || props.groupId;
-                    const groupManagementUrl = `https://test.embed.exoclass.com/en/embed/provider/${API_CONFIG.provider_key}/group-management/${groupKey}`;
+                    const groupManagementUrl = `https://embed.exoclass.com/lt/embed/provider/${API_CONFIG.provider_key}/group-management/${groupKey}`;
                     $registerButton.attr('href', groupManagementUrl);
                     $registerButton.show();
                 } else {
