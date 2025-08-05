@@ -58,9 +58,7 @@ function exoclass_calendar_debug_updater() {
     
     echo '<p><strong>Testing repository:</strong> ' . esc_html($github_user . '/' . $github_repo) . '</p>';
     
-    if ($github_user === 'your-github-username') {
-        echo '<p class="warning">⚠️  You need to update the GitHub username in the debug script and main plugin file!</p>';
-    }
+
     
     $api_url = "https://api.github.com/repos/{$github_user}/{$github_repo}/releases/latest";
     
@@ -184,7 +182,7 @@ function exoclass_calendar_debug_updater() {
         try {
             $updater = new ExoClassCalendar_Updater(
                 WP_PLUGIN_DIR . '/exoclass-calendar/exoclass-calendar.php',
-                EXOCLASS_CALENDAR_VERSION,
+                defined('EXOCLASS_CALENDAR_VERSION') ? EXOCLASS_CALENDAR_VERSION : 'undefined',
                 $github_user,
                 $github_repo
             );

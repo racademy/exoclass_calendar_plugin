@@ -41,6 +41,9 @@ class ExoClassCalendar {
         
         // Initialize updater
         $this->init_updater();
+        
+        // Debug handler for testing updates
+        add_action('init', array($this, 'handle_debug_request'));
     }
     
     public function init() {
@@ -52,6 +55,15 @@ class ExoClassCalendar {
         // Initialize the updater with GitHub repository info
         if (class_exists('ExoClassCalendar_Updater')) {
             new ExoClassCalendar_Updater(__FILE__, EXOCLASS_CALENDAR_VERSION, 'racademy', 'exoclass_calendar_plugin');
+        }
+    }
+    
+    public function handle_debug_request() {
+        // Handle debug request for update testing
+        if (current_user_can('manage_options') && isset($_GET['exoclass_debug'])) {
+            require_once EXOCLASS_CALENDAR_PLUGIN_PATH . 'includes/debug-updater.php';
+            exoclass_calendar_debug_updater();
+            exit;
         }
     }
     
