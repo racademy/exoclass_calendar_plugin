@@ -192,7 +192,7 @@
                 const $registerButton = $modal.find('.register-button');
                 if (props.groupExternalKey || props.groupId) {
                     const groupKey = props.groupExternalKey || props.groupId;
-                    const groupManagementUrl = `https://test.embed.exoclass.com/en/embed/provider/${API_CONFIG.provider_key}/group-management/${groupKey}`;
+                    const groupManagementUrl = `https://embed.exoclass.com/lt/embed/provider/${API_CONFIG.provider_key}/group-management/${groupKey}`;
                     $registerButton.attr('href', groupManagementUrl);
                     $registerButton.show();
                 } else {
@@ -531,7 +531,19 @@
         
         if (filterData.locations && filterData.locations.length > 0) {
             filterData.locations.forEach(location => {
-                locationDropdown.append(`<option value="${location.id}">${location.name}</option>`);
+                // Create shorter address: street + city
+                let displayText = location.name;
+                
+                if (location.address) {
+                    // Remove postal code and country from address, but keep city
+                    const addressParts = location.address.split(',');
+                    // Keep all parts except the last one (country), and remove postal code
+                    const streetCityParts = addressParts.slice(0, -1); // Remove country
+                    const streetAndCity = streetCityParts.join(',').trim();
+                    displayText = streetAndCity || location.name;
+                }
+                
+                locationDropdown.append(`<option value="${location.id}">${displayText}</option>`);
             });
         }
     }
