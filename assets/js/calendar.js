@@ -531,7 +531,19 @@
         
         if (filterData.locations && filterData.locations.length > 0) {
             filterData.locations.forEach(location => {
-                locationDropdown.append(`<option value="${location.id}">${location.name}</option>`);
+                // Create shorter address: street + city
+                let displayText = location.name;
+                
+                if (location.address) {
+                    // Remove postal code and country from address, but keep city
+                    const addressParts = location.address.split(',');
+                    // Keep all parts except the last one (country), and remove postal code
+                    const streetCityParts = addressParts.slice(0, -1); // Remove country
+                    const streetAndCity = streetCityParts.join(',').trim();
+                    displayText = streetAndCity || location.name;
+                }
+                
+                locationDropdown.append(`<option value="${location.id}">${displayText}</option>`);
             });
         }
     }
