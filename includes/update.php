@@ -27,6 +27,7 @@ class ExoClassCalendar_Updater {
         add_filter('pre_set_site_transient_update_plugins', array($this, 'check_for_update'));
         add_filter('plugins_api', array($this, 'plugin_info'), 20, 3);
         add_filter('upgrader_source_selection', array($this, 'upgrader_source_selection'), 10, 4);
+        add_action('upgrader_process_complete', array($this, 'purge_transients_after_update'), 10, 2);
     }
     
     public function check_for_update($transient) {
@@ -329,5 +330,29 @@ class ExoClassCalendar_Updater {
      */
     public function clear_cache() {
         delete_transient('exoclass_calendar_github_release');
+        delete_site_transient('update_plugins');
+    }
+    
+    /**
+     * Purge transients after plugin update
+     */
+    public function purge_transients_after_update($upgrader_object, $options) {
+        // Check if our plugin was just updated
+        if ($options['action'] == 'update' && $options['type'] == 'plugin') {
+            // Check if single plugin update
+            if (isset($options['plugin']) && $options['plugin'] == $this->plugin_slug) {
+                $this->clear_cache();
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('ExoClass Calendar: Cleared update cache after successful update');
+                }
+            }
+            // Check if bulk update
+            elseif (isset($options['plugins']) && in_array($this->plugin_slug, $options['plugins'])) {
+                $this->clear_cache();
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('ExoClass Calendar: Cleared update cache after bulk update');
+                }
+            }
+        }
     }
 }

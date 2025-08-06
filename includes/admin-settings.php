@@ -161,6 +161,17 @@ class ExoClassCalendarAdmin {
             </div>
             
             <div class="card" style="max-width: 800px; margin-top: 20px;">
+                <h2>Update Cache Management</h2>
+                <p>Clear the plugin update cache to force a fresh check for updates:</p>
+                <button type="button" id="clear-update-cache" class="button button-secondary">Clear Update Cache</button>
+                <div id="cache-clear-result" style="margin-top: 10px;"></div>
+                <p style="margin-top: 10px; color: #666; font-size: 13px;">
+                    Note: This will clear both the GitHub release cache and WordPress update transients. 
+                    Use this if you see a persistent update notification after updating the plugin.
+                </p>
+            </div>
+            
+            <div class="card" style="max-width: 800px; margin-top: 20px;">
                 <h2>Filter ID Finder</h2>
                 <p>Find the correct IDs for your filter parameters:</p>
                 
@@ -178,6 +189,38 @@ class ExoClassCalendarAdmin {
         
         <script>
         jQuery(document).ready(function($) {
+            // Clear update cache button
+            $('#clear-update-cache').on('click', function() {
+                var button = $(this);
+                var resultDiv = $('#cache-clear-result');
+                
+                button.prop('disabled', true).text('Clearing...');
+                resultDiv.html('<p>Clearing update cache...</p>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'exoclass_clear_update_cache',
+                        nonce: '<?php echo wp_create_nonce('exoclass_clear_cache_nonce'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            resultDiv.html('<p style="color: green;">✅ Update cache cleared successfully!</p>');
+                        } else {
+                            resultDiv.html('<p style="color: red;">❌ Failed to clear cache: ' + (response.data.message || 'Unknown error') + '</p>');
+                        }
+                    },
+                    error: function() {
+                        resultDiv.html('<p style="color: red;">❌ An error occurred while clearing the cache.</p>');
+                    },
+                    complete: function() {
+                        button.prop('disabled', false).text('Clear Update Cache');
+                    }
+                });
+            });
+            
+            // Test API connection button
             $('#test-api-connection').on('click', function() {
                 var button = $(this);
                 var resultDiv = $('#api-test-result');
@@ -521,5 +564,43 @@ function exoclass_get_filter_ids_callback() {
         
     } catch (Exception $e) {
         wp_send_json_error(array('message' => $e->getMessage()));
+    }
+}
+
+// AJAX handler for clearing update cache
+add_action('wp_ajax_exoclass_clear_update_cache', 'exoclass_clear_update_cache_callback');
+function exoclass_clear_update_cache_callback() {
+    check_ajax_referer('exoclass_clear_cache_nonce', 'nonce');
+    
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Insufficient permissions'));
+    }
+    
+    try {
+        // Clear our plugin's GitHub release cache
+        delete_transient('exoclass_calendar_github_release');
+        
+        // Clear WordPress update plugins transient
+        delete_site_transient('update_plugins');
+        
+        // If updater class exists and has clear_cache method, use it
+        if (class_exists('ExoClassCalendar_Updater')) {
+            $updater = new ExoClassCalendar_Updater(
+                WP_PLUGIN_DIR . '/exoclass-calendar/exoclass-calendar.php',
+                EXOCLASS_CALENDAR_VERSION,
+                'racademy',
+                'exoclass_calendar_plugin'
+            );
+            if (method_exists($updater, 'clear_cache')) {
+                $updater->clear_cache();
+            }
+        }
+        
+        wp_send_json_success(array(
+            'message' => 'Update cache cleared successfully. WordPress will check for updates on the next page load.'
+        ));
+        
+    } catch (Exception $e) {
+        wp_send_json_error(array('message' => 'Failed to clear cache: ' . $e->getMessage()));
     }
 } 
