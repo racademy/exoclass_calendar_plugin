@@ -1,5 +1,11 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.2.3] - 2025-08-06
+### Pataisyta
+- GitHub ZIP failų ekstraktavimo problema WordPress atnaujinimuose
+- Pagerinta folder detection logika GitHub release'ams
+- Pridėtas debug logging atnaujinimų procesui
+
 ## [1.2.2] - 2025-08-05
 ### Pataisyta
 - Dinaminis embed URL generavimas iš admin API nustatymų

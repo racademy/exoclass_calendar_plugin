@@ -99,6 +99,13 @@ class ExoClassCalendar_Updater {
     public function upgrader_source_selection($source, $remote_source, $upgrader, $hook_extra = null) {
         global $wp_filesystem;
         
+        // Debug logging
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('ExoClass Calendar Upgrader: Source selection called');
+            error_log('Plugin slug: ' . $this->plugin_slug);
+            error_log('Hook extra plugin: ' . (isset($hook_extra['plugin']) ? $hook_extra['plugin'] : 'not set'));
+        }
+        
         if (isset($hook_extra['plugin']) && $hook_extra['plugin'] === $this->plugin_slug) {
             $corrected_source = $remote_source . '/' . $this->plugin_basename . '/';
             
@@ -106,12 +113,29 @@ class ExoClassCalendar_Updater {
                 return $corrected_source;
             }
             
-            // GitHub creates folder like: exoclass-calendar-main or exoclass-calendar-1.2.0
+            // GitHub creates folder like: racademy-exoclass_calendar_plugin-7aed441
             $files = $wp_filesystem->dirlist($remote_source);
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('ExoClass Calendar: Available files in ' . $remote_source . ': ' . print_r($files, true));
+            }
+            
             if (is_array($files)) {
                 foreach ($files as $file) {
-                    if ($file['type'] === 'd' && strpos($file['name'], $this->github_repo) === 0) {
-                        return trailingslashit($remote_source) . trailingslashit($file['name']);
+                    if ($file['type'] === 'd') {
+                        $folder_name = $file['name'];
+                        if (defined('WP_DEBUG') && WP_DEBUG) {
+                            error_log('ExoClass Calendar: Checking folder: ' . $folder_name);
+                        }
+                        
+                        // Check if folder contains our repository name
+                        if (strpos($folder_name, $this->github_repo) !== false || 
+                            strpos($folder_name, $this->github_user . '-' . $this->github_repo) === 0) {
+                            $final_source = trailingslashit($remote_source) . trailingslashit($folder_name);
+                            if (defined('WP_DEBUG') && WP_DEBUG) {
+                                error_log('ExoClass Calendar: Using source: ' . $final_source);
+                            }
+                            return $final_source;
+                        }
                     }
                 }
             }
