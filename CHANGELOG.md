@@ -1,5 +1,11 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.2.2] - 2025-08-05
+### Pataisyta
+- Dinaminis embed URL generavimas iš admin API nustatymų
+- Registracijos mygtukas dabar naudoja konfigūruojamą API URL vietoj hardcoded
+- Palaiko test.api.exoclass.com ir api.exoclass.com domenus
+
 ## [1.2.1] - 2025-08-05
 ### Pridėta
 - Event details modal su išsamiu informacijos rodymu

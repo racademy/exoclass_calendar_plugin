@@ -3,7 +3,7 @@
  * Plugin Name: ExoClass Calendar
  * Plugin URI: https://exoclass.io
  * Description: A beautiful calendar plugin for displaying fitness classes and activities from ExoClass API with filtering capabilities.
- * Version: 1.2.1
+ * Version: 1.2.2
  * Author: Bright Projects
  * Author URI: https://brightprojects.io
  * License: GPL v2 or later
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('EXOCLASS_CALENDAR_VERSION', '1.2.1');
+define('EXOCLASS_CALENDAR_VERSION', '1.2.2');
 define('EXOCLASS_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EXOCLASS_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -42,8 +42,8 @@ class ExoClassCalendar {
         // Initialize updater
         $this->init_updater();
         
-        // Debug handler for testing updates
-        add_action('init', array($this, 'handle_debug_request'));
+        // Debug handler for testing updates (only in admin area)
+        add_action('admin_init', array($this, 'handle_debug_request'));
     }
     
     public function init() {

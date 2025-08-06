@@ -368,11 +368,42 @@ class ExoClassCalendarAdmin {
     
     public static function get_api_config() {
         $options = get_option('exoclass_calendar_options', array());
+        $api_base_url = isset($options['api_base_url']) ? $options['api_base_url'] : 'https://test.api.exoclass.com/api/v1/en';
+        
+        // Derive embed URL from API URL
+        $embed_url = self::get_embed_url_from_api($api_base_url);
         
         return array(
-            'base_url' => isset($options['api_base_url']) ? $options['api_base_url'] : 'https://test.api.exoclass.com/api/v1/en',
+            'base_url' => $api_base_url,
+            'embed_url' => $embed_url,
             'provider_key' => isset($options['provider_key']) ? $options['provider_key'] : 'af6791ea-6262-4705-a78c-b7fdc52aec6a'
         );
+    }
+    
+    private static function get_embed_url_from_api($api_url) {
+        // Convert API URL to embed URL
+        // Example: https://test.api.exoclass.com/api/v1/en -> https://test.embed.exoclass.com
+        // Example: https://api.exoclass.com/api/v1/en -> https://embed.exoclass.com
+        
+        $parsed = parse_url($api_url);
+        if (!$parsed || !isset($parsed['host'])) {
+            return 'https://embed.exoclass.com'; // fallback
+        }
+        
+        $scheme = isset($parsed['scheme']) ? $parsed['scheme'] : 'https';
+        $host = $parsed['host'];
+        
+        // Replace 'api.' with 'embed.' in hostname
+        if (strpos($host, 'api.') === 0) {
+            $embed_host = str_replace('api.', 'embed.', $host);
+        } elseif (strpos($host, 'test.api.') === 0) {
+            $embed_host = str_replace('test.api.', 'test.embed.', $host);
+        } else {
+            // If no 'api.' prefix, assume main domain and add 'embed.'
+            $embed_host = 'embed.' . $host;
+        }
+        
+        return $scheme . '://' . $embed_host;
     }
     
     public static function get_display_config() {
