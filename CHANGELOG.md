@@ -1,5 +1,10 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.2.5] - 2025-01-07
+### Testavimas
+- Test release - tikrinama ar veikia automatinis atnaujinimo mechanizmas
+- Testuojama GitHub release assets ZIP struktūra
+
 ## [1.2.4] - 2025-01-07
 ### Pataisyta
 - WordPress plugin atnaujinimo folder struktūros problema
