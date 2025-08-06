@@ -38,8 +38,8 @@ jobs:
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         
-        # Create a clean copy without dev files
-        mkdir -p release-temp
+        # Create a clean copy with proper plugin folder structure
+        mkdir -p release-temp/exoclass-calendar
         rsync -av --exclude='.git*' \
                   --exclude='.github' \
                   --exclude='node_modules' \
@@ -47,11 +47,11 @@ jobs:
                   --exclude='release.sh' \
                   --exclude='release-temp' \
                   --exclude='.DS_Store' \
-                  ./ release-temp/
+                  ./ release-temp/exoclass-calendar/
         
-        # Create ZIP file
+        # Create ZIP file with proper folder structure
         cd release-temp
-        zip -r "../exoclass-calendar-$VERSION.zip" .
+        zip -r "../exoclass-calendar-$VERSION.zip" exoclass-calendar
         cd ..
         
         # Clean up

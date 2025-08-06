@@ -94,7 +94,7 @@ class ExoClassCalendar_Updater {
     }
     
     /**
-     * Fix GitHub ZIP extraction - GitHub creates subfolder with repo name
+     * Fix GitHub ZIP extraction - Handle both release assets and zipball URLs
      */
     public function upgrader_source_selection($source, $remote_source, $upgrader, $hook_extra = null) {
         global $wp_filesystem;
@@ -102,43 +102,75 @@ class ExoClassCalendar_Updater {
         // Debug logging
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('ExoClass Calendar Upgrader: Source selection called');
+            error_log('Source: ' . $source);
+            error_log('Remote source: ' . $remote_source);
             error_log('Plugin slug: ' . $this->plugin_slug);
             error_log('Hook extra plugin: ' . (isset($hook_extra['plugin']) ? $hook_extra['plugin'] : 'not set'));
         }
         
-        if (isset($hook_extra['plugin']) && $hook_extra['plugin'] === $this->plugin_slug) {
-            $corrected_source = $remote_source . '/' . $this->plugin_basename . '/';
-            
-            if ($wp_filesystem->is_dir($corrected_source)) {
-                return $corrected_source;
-            }
-            
-            // GitHub creates folder like: racademy-exoclass_calendar_plugin-7aed441
-            $files = $wp_filesystem->dirlist($remote_source);
+        // Only process our plugin
+        if (!isset($hook_extra['plugin']) || $hook_extra['plugin'] !== $this->plugin_slug) {
+            return $source;
+        }
+        
+        // First, check if the correct folder already exists (from release asset)
+        $correct_folder = trailingslashit($remote_source) . 'exoclass-calendar';
+        if ($wp_filesystem->is_dir($correct_folder)) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('ExoClass Calendar: Available files in ' . $remote_source . ': ' . print_r($files, true));
+                error_log('ExoClass Calendar: Found correct folder structure: ' . $correct_folder);
+            }
+            return trailingslashit($correct_folder);
+        }
+        
+        // If not, we need to handle GitHub zipball structure
+        $files = $wp_filesystem->dirlist($remote_source);
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('ExoClass Calendar: Files in ' . $remote_source . ': ' . print_r(array_keys($files), true));
+        }
+        
+        if (!is_array($files)) {
+            return $source;
+        }
+        
+        // Look for GitHub-generated folder (username-repo-hash format)
+        foreach ($files as $file) {
+            if ($file['type'] !== 'd') {
+                continue;
             }
             
-            if (is_array($files)) {
-                foreach ($files as $file) {
-                    if ($file['type'] === 'd') {
-                        $folder_name = $file['name'];
-                        if (defined('WP_DEBUG') && WP_DEBUG) {
-                            error_log('ExoClass Calendar: Checking folder: ' . $folder_name);
-                        }
-                        
-                        // Check if folder contains our repository name
-                        if (strpos($folder_name, $this->github_repo) !== false || 
-                            strpos($folder_name, $this->github_user . '-' . $this->github_repo) === 0) {
-                            $final_source = trailingslashit($remote_source) . trailingslashit($folder_name);
-                            if (defined('WP_DEBUG') && WP_DEBUG) {
-                                error_log('ExoClass Calendar: Using source: ' . $final_source);
-                            }
-                            return $final_source;
-                        }
+            $folder_name = $file['name'];
+            
+            // Check various GitHub folder patterns
+            if (strpos($folder_name, $this->github_repo) !== false || 
+                strpos($folder_name, 'exoclass-calendar') !== false ||
+                preg_match('/^[a-z0-9]+-exoclass[-_]calendar/i', $folder_name)) {
+                
+                $old_source = trailingslashit($remote_source) . $folder_name;
+                $new_source = trailingslashit($remote_source) . 'exoclass-calendar';
+                
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('ExoClass Calendar: Renaming ' . $old_source . ' to ' . $new_source);
+                }
+                
+                // Rename the folder to the correct plugin name
+                if ($wp_filesystem->move($old_source, $new_source)) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('ExoClass Calendar: Successfully renamed folder');
                     }
+                    return trailingslashit($new_source);
+                } else {
+                    // If rename fails, try to use the original folder
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('ExoClass Calendar: Could not rename, using original: ' . $old_source);
+                    }
+                    return trailingslashit($old_source);
                 }
             }
+        }
+        
+        // Fallback to original source
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('ExoClass Calendar: No matching folder found, using original source');
         }
         
         return $source;
@@ -188,9 +220,26 @@ class ExoClassCalendar_Updater {
         // Extract version from tag (remove 'v' prefix if exists)
         $version = ltrim($release['tag_name'], 'v');
         
+        // Look for release asset ZIP file
+        $download_url = $release['zipball_url']; // Default fallback
+        
+        if (!empty($release['assets'])) {
+            foreach ($release['assets'] as $asset) {
+                // Look for our plugin ZIP file
+                if (strpos($asset['name'], 'exoclass-calendar') !== false && 
+                    substr($asset['name'], -4) === '.zip') {
+                    $download_url = $asset['browser_download_url'];
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('ExoClass Calendar: Using release asset: ' . $asset['name']);
+                    }
+                    break;
+                }
+            }
+        }
+        
         $result = array(
             'version' => $version,
-            'download_url' => $release['zipball_url'],
+            'download_url' => $download_url,
             'html_url' => $release['html_url'],
             'body' => $release['body'],
             'published_at' => $release['published_at']
