@@ -1,5 +1,12 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.2.4] - 2025-01-07
+### Pataisyta
+- WordPress plugin atnaujinimo folder struktūros problema
+- Plugin dabar teisingai išlaiko 'exoclass-calendar' folder pavadinimą po atnaujinimų
+- GitHub workflow sukuria ZIP su teisinga plugin folder struktūra
+- Atnaujinimo mechanizmas dabar naudoja release assets vietoj zipball URLs
+
 ## [1.2.3] - 2025-08-06
 ### Pataisyta
 - GitHub ZIP failų ekstraktavimo problema WordPress atnaujinimuose
