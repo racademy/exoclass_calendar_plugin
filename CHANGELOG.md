@@ -1,5 +1,25 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.3.0] - 2025-01-07
+### Pridėta
+- Universalus plugin design - pašalintas hardcoded provider key
+- Admin interface pagerintas su placeholder ir instrukcijomis
+- Trenerio nuotraukos ištraukimas iš realios API struktūros (employee_provider.medias)
+- Lokacijos pilno pločio rodymas modal'e
+- Improved API documentation su universal provider setup
+
+### Pataisyta
+- Modal layout optimizacija - pašalinta amžiaus grupė iš info sąrašo
+- Lokacijos formatavimas: "Pavadinimas - Pilnas adresas"
+- Trenerio aprašymo "read more" funkcionalumas
+- JavaScript teacher photo detection logika pagerintas
+- CSS responsive design lokacijos informacijai
+
+### Pakeista
+- Plugin dabar veiks bet kuriam ExoClass provider'iui
+- API endpoint atnaujintas į https://api.exoclass.com/api/v1/en
+- Documentation atnaujintas su naujais setup requirements
+
 ## [1.2.5] - 2025-01-07
 ### Testavimas
 - Test release - tikrinama ar veikia automatinis atnaujinimo mechanizmas

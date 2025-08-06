@@ -3,7 +3,7 @@
  * Plugin Name: ExoClass Calendar
  * Plugin URI: https://exoclass.io
  * Description: A beautiful calendar plugin for displaying fitness classes and activities from ExoClass API with filtering capabilities.
- * Version: 1.2.5
+ * Version: 1.3.0
  * Author: Bright Projects
  * Author URI: https://brightprojects.io
  * License: GPL v2 or later
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('EXOCLASS_CALENDAR_VERSION', '1.2.5');
+define('EXOCLASS_CALENDAR_VERSION', '1.3.0');
 define('EXOCLASS_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EXOCLASS_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -237,6 +237,7 @@ class ExoClassCalendar {
                                 <span class="info-label">👤 <?php _e('Treneris', 'exoclass-calendar'); ?>:</span>
                                 <span class="event-teacher"></span>
                             </div>
+                            
                             <div class="info-row">
                                 <span class="info-label">👥 <?php _e('Laisvos vietos', 'exoclass-calendar'); ?>:</span>
                                 <span class="event-spots"></span>
@@ -245,16 +246,30 @@ class ExoClassCalendar {
                                 <span class="info-label">🎯 <?php _e('Lygis', 'exoclass-calendar'); ?>:</span>
                                 <span class="event-difficulty"></span>
                             </div>
+                            <div class="info-row location-row">
+                                <span class="info-label">📍 <?php _e('Lokacija', 'exoclass-calendar'); ?>:</span>
+                                <span class="event-location"></span>
+                            </div>
                         </div>
                         <div class="event-modal-description">
                             <div class="description-content"></div>
                             <button class="read-more-btn description-read-more"><?php _e('Skaityti daugiau', 'exoclass-calendar'); ?></button>
                         </div>
                         <div class="event-modal-teacher-info" style="display: none;">
-                            <div class="teacher-description">
-                                <div class="teacher-description-content"></div>
+                            <h3 class="teacher-section-title"><?php _e('Treneris', 'exoclass-calendar'); ?></h3>
+                            <div class="teacher-card">
+                                <div class="teacher-avatar">
+                                    <img class="teacher-photo" src="" alt="Treneris" />
+                                    <div class="teacher-photo-placeholder">👤</div>
+                                </div>
+                                <div class="teacher-info">
+                                    <h4 class="teacher-name"></h4>
+                                    <div class="teacher-description">
+                                        <div class="teacher-description-content"></div>
+                                        <button class="read-more-btn"><?php _e('Skaityti daugiau', 'exoclass-calendar'); ?></button>
+                                    </div>
+                                </div>
                             </div>
-                            <button class="read-more-btn"><?php _e('Skaityti daugiau', 'exoclass-calendar'); ?></button>
                         </div>
                         <div class="event-modal-actions">
                             <a href="#" class="register-button" target="_blank"><?php _e('Registruotis', 'exoclass-calendar'); ?></a>
@@ -365,7 +380,8 @@ class ExoClassCalendar {
                             'groupId' => $group['id'],
                             'groupExternalKey' => isset($group['external_key']) ? $group['external_key'] : $group['id'],
                             'sessionId' => $session['id'],
-                            'difficulty' => isset($group['difficulty_type']['name']) ? $group['difficulty_type']['name'] : null
+                            'difficulty' => isset($group['difficulty_type']['name']) ? $group['difficulty_type']['name'] : null,
+                            'locationData' => isset($group['location']) ? $group['location'] : null
                         )
                     );
                 }
@@ -450,19 +466,98 @@ class ExoClassCalendar {
     }
     
     private function get_teacher_data($group) {
+        $teacher_data = null;
+        
         // Try to get teacher info from the 'teachers' array
         if (isset($group['teachers']) && is_array($group['teachers']) && !empty($group['teachers'])) {
-            $teacher = $group['teachers'][0];
-            // Return the whole teacher array (contains bio/description if available)
-            return $teacher;
+            $teacher_data = $group['teachers'][0];
         }
         // Fallbacks if needed
-        if (isset($group['staff']) && is_array($group['staff']) && !empty($group['staff'])) {
-            return $group['staff'][0];
+        elseif (isset($group['staff']) && is_array($group['staff']) && !empty($group['staff'])) {
+            $teacher_data = $group['staff'][0];
         }
-        if (isset($group['instructor'])) {
-            return $group['instructor'];
+        elseif (isset($group['instructor'])) {
+            $teacher_data = $group['instructor'];
         }
+        
+        // Debug logging to see what teacher data we're getting
+        if (defined('WP_DEBUG') && WP_DEBUG && $teacher_data) {
+            error_log('ExoClass Calendar - Teacher data fields: ' . print_r(array_keys($teacher_data), true));
+            
+            // Check for photos in employee_provider.medias (actual API structure)
+            if (isset($teacher_data['employee_provider']['medias']) && 
+                is_array($teacher_data['employee_provider']['medias']) && 
+                !empty($teacher_data['employee_provider']['medias'])) {
+                $photo_url = $teacher_data['employee_provider']['medias'][0]['full_path'];
+                error_log('ExoClass Calendar - Teacher photo from employee_provider.medias: ' . $photo_url);
+            }
+            
+            // Legacy fallbacks
+            if (isset($teacher_data['photo'])) {
+                error_log('ExoClass Calendar - Teacher photo found: ' . $teacher_data['photo']);
+            }
+            if (isset($teacher_data['profile_image'])) {
+                error_log('ExoClass Calendar - Teacher profile_image found: ' . $teacher_data['profile_image']);
+            }
+            if (isset($teacher_data['image'])) {
+                error_log('ExoClass Calendar - Teacher image found: ' . $teacher_data['image']);
+            }
+        }
+        
+        return $teacher_data;
+    }
+    
+    private function get_age_group($group) {
+        // Debug: Log group data to see available age fields
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('ExoClass Calendar - Group age data: ' . print_r([
+                'age' => isset($group['age']) ? $group['age'] : 'not set',
+                'age_range' => isset($group['age_range']) ? $group['age_range'] : 'not set',
+                'name' => isset($group['name']) ? $group['name'] : 'not set',
+                'min_age' => isset($group['min_age']) ? $group['min_age'] : 'not set',
+                'max_age' => isset($group['max_age']) ? $group['max_age'] : 'not set'
+            ], true));
+        }
+        
+        // Try different possible sources for age group information
+        
+        // 1. Check age.name field
+        if (isset($group['age']['name']) && !empty($group['age']['name'])) {
+            return $group['age']['name'];
+        }
+        
+        // 2. Check age_range field
+        if (isset($group['age_range']) && !empty($group['age_range'])) {
+            return $group['age_range'];
+        }
+        
+        // 3. Check if age info is in the group name
+        if (isset($group['name']) && !empty($group['name'])) {
+            // Look for age patterns in group name (e.g., "14-18m", "6+m", etc.)
+            if (preg_match('/(\d+[-–]\d+\s*m\.?|\d+\+\s*m\.?)/u', $group['name'], $matches)) {
+                return $matches[1];
+            }
+        }
+        
+        // 4. Check age field directly (might be string)
+        if (isset($group['age']) && is_string($group['age']) && !empty($group['age'])) {
+            return $group['age'];
+        }
+        
+        // 5. Check for min_age and max_age fields
+        if (isset($group['min_age']) && isset($group['max_age'])) {
+            return $group['min_age'] . '-' . $group['max_age'] . 'm.';
+        } elseif (isset($group['min_age'])) {
+            return $group['min_age'] . '+m.';
+        }
+        
+        // 6. Check for age_min and age_max fields (alternative naming)
+        if (isset($group['age_min']) && isset($group['age_max'])) {
+            return $group['age_min'] . '-' . $group['age_max'] . 'm.';
+        } elseif (isset($group['age_min'])) {
+            return $group['age_min'] . '+m.';
+        }
+        
         return null;
     }
 }

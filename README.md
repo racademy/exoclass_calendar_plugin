@@ -55,13 +55,20 @@ You can customize the calendar with parameters:
 
 ## Configuration
 
-The plugin is pre-configured to work with the ExoClass test API. To change the API configuration, edit the `exoclass-calendar.php` file and update the `API_CONFIG` array in the `wp_localize_script` function.
+After installation, you need to configure the plugin with your ExoClass API credentials:
+
+1. Go to **Settings → ExoClass Calendar** in your WordPress admin
+2. Enter your **API Base URL** (usually `https://api.exoclass.com/api/v1/en`)
+3. Enter your **Provider Key** (obtain this from your ExoClass account)
+4. Test the API connection using the built-in test tool
+5. Use the shortcode `[exoclass_calendar]` on any page
 
 ## API Configuration
 
-The plugin uses the following API endpoints:
-- Base URL: `https://test.api.exoclass.com/api/v1/en`
-- Provider Key: `af6791ea-6262-4705-a78c-b7fdc52aec6a`
+The plugin connects to the ExoClass API:
+- **Base URL**: `https://api.exoclass.com/api/v1/en` (production) or `https://test.api.exoclass.com/api/v1/en` (testing)
+- **Provider Key**: Each ExoClass provider has their own unique key
+- **How to get your provider key**: Contact ExoClass support or check your ExoClass account dashboard
 
 ## Features in Detail
 

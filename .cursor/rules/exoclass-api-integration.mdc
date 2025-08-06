@@ -7,9 +7,10 @@ alwaysApply: false
 # ExoClass API Integration Guidelines
 
 ## API Configuration
-- Base URL: `https://test.api.exoclass.com/api/v1/en`
-- Provider Key: `af6791ea-6262-4705-a78c-b7fdc52aec6a`
+- Base URL: `https://api.exoclass.com/api/v1/en` (production) or `https://test.api.exoclass.com/api/v1/en` (testing)
+- Provider Key: *Each installation needs their own provider key from ExoClass*
 - Always use proper error handling for API calls
+- Plugin should work with any ExoClass provider, not be hardcoded to specific provider
 
 ## Endpoint Usage
 - `/providers/{providerKey}/groups` - Get group/class data

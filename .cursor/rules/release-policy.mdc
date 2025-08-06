@@ -1,0 +1,24 @@
+---
+description: Release and commit policy - NEVER commit or create releases without explicit user request
+alwaysApply: true
+---
+
+# CRITICAL RELEASE POLICY
+
+**NEVER** commit code or create releases unless explicitly requested by the user.
+
+## Rules:
+- Do NOT run `git commit` unless user specifically asks
+- Do NOT run `git push` unless user specifically asks  
+- Do NOT create version tags unless user specifically asks
+- Do NOT create GitHub releases unless user specifically asks
+- User will decide when to commit and when to make releases
+- Always wait for user's explicit instruction before any git operations
+
+## When making changes:
+- Make code changes as requested
+- Show the changes to user
+- Wait for user to decide when to commit/release
+- User will write when release should be made
+
+This is EXTREMELY IMPORTANT and must ALWAYS be followed.

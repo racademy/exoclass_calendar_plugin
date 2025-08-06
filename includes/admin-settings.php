@@ -378,19 +378,19 @@ class ExoClassCalendarAdmin {
     
     public function api_base_url_callback() {
         $options = get_option('exoclass_calendar_options', array());
-        $value = isset($options['api_base_url']) ? $options['api_base_url'] : 'https://test.api.exoclass.com/api/v1/en';
+                        $value = isset($options['api_base_url']) ? $options['api_base_url'] : 'https://api.exoclass.com/api/v1/en';
         ?>
         <input type="url" name="exoclass_calendar_options[api_base_url]" value="<?php echo esc_attr($value); ?>" class="regular-text" />
-        <p class="description">The base URL for the ExoClass API (e.g., https://test.api.exoclass.com/api/v1/en)</p>
+        <p class="description">The base URL for the ExoClass API (e.g., https://api.exoclass.com/api/v1/en)</p>
         <?php
     }
     
     public function provider_key_callback() {
         $options = get_option('exoclass_calendar_options', array());
-        $value = isset($options['provider_key']) ? $options['provider_key'] : 'af6791ea-6262-4705-a78c-b7fdc52aec6a';
+        $value = isset($options['provider_key']) ? $options['provider_key'] : '';
         ?>
-        <input type="text" name="exoclass_calendar_options[provider_key]" value="<?php echo esc_attr($value); ?>" class="regular-text" />
-        <p class="description">Your ExoClass provider key</p>
+        <input type="text" name="exoclass_calendar_options[provider_key]" value="<?php echo esc_attr($value); ?>" class="regular-text" placeholder="e.g., 8691382b-5bae-4396-9b8f-f6e6d7ffd44c" />
+        <p class="description">Your ExoClass provider key. You can obtain this from your ExoClass account or contact ExoClass support.</p>
         <?php
     }
     
@@ -411,7 +411,7 @@ class ExoClassCalendarAdmin {
     
     public static function get_api_config() {
         $options = get_option('exoclass_calendar_options', array());
-        $api_base_url = isset($options['api_base_url']) ? $options['api_base_url'] : 'https://test.api.exoclass.com/api/v1/en';
+        $api_base_url = isset($options['api_base_url']) ? $options['api_base_url'] : 'https://api.exoclass.com/api/v1/en';
         
         // Derive embed URL from API URL
         $embed_url = self::get_embed_url_from_api($api_base_url);
@@ -419,7 +419,7 @@ class ExoClassCalendarAdmin {
         return array(
             'base_url' => $api_base_url,
             'embed_url' => $embed_url,
-            'provider_key' => isset($options['provider_key']) ? $options['provider_key'] : 'af6791ea-6262-4705-a78c-b7fdc52aec6a'
+            'provider_key' => isset($options['provider_key']) ? $options['provider_key'] : ''
         );
     }
     

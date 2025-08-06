@@ -165,6 +165,17 @@
                 $modal.find('.event-time').text(timeRange);
                 $modal.find('.event-teacher').text(props.teacher || 'Treneris');
                 
+                // Format location as single line: "SKILLZ centras - Lukiškių g. 5, 01108 Vilnius"
+                let locationText = 'Nenurodyta';
+                if (props.locationData) {
+                    locationText = props.locationData.name || 'Nenurodyta';
+                    if (props.locationData.address) {
+                        // Format as: Name - Full Address
+                        locationText += ` - ${props.locationData.address}`;
+                    }
+                }
+                $modal.find('.event-location').text(locationText);
+                
                 // Update spots information
                 let spotsText;
                 if (props.availableSpots === 0) {
@@ -218,10 +229,65 @@
                 
                 // Update teacher information if available
                 const $teacherInfo = $modal.find('.event-modal-teacher-info');
+                const $teacherName = $modal.find('.teacher-name');
+                const $teacherPhoto = $modal.find('.teacher-photo');
+                const $teacherPhotoPlaceholder = $modal.find('.teacher-photo-placeholder');
                 const $teacherDescriptionContent = $modal.find('.teacher-description-content');
-                const $readMoreBtn = $modal.find('.read-more-btn');
+                const $readMoreBtn = $teacherInfo.find('.read-more-btn');
                 
-                if (props.teacherData) {
+                if (props.teacherData && props.teacher) {
+                    // Set teacher name
+                    $teacherName.text(props.teacher);
+                    
+                    // Handle teacher photo - check multiple possible sources
+                    let teacherPhotoUrl = null;
+                    
+                    // Method 1: Employee provider medias (actual API structure)
+                    if (props.teacherData.employee_provider && 
+                        props.teacherData.employee_provider.medias && 
+                        Array.isArray(props.teacherData.employee_provider.medias) && 
+                        props.teacherData.employee_provider.medias.length > 0) {
+                        teacherPhotoUrl = props.teacherData.employee_provider.medias[0].full_path;
+                    }
+                    // Method 2: Direct photo field
+                    else if (props.teacherData.photo) {
+                        teacherPhotoUrl = props.teacherData.photo;
+                    }
+                    // Method 3: Profile image field
+                    else if (props.teacherData.profile_image) {
+                        teacherPhotoUrl = props.teacherData.profile_image;
+                    }
+                    // Method 4: Image field
+                    else if (props.teacherData.image) {
+                        teacherPhotoUrl = props.teacherData.image;
+                    }
+                    // Method 5: Avatar field
+                    else if (props.teacherData.avatar) {
+                        teacherPhotoUrl = props.teacherData.avatar;
+                    }
+                    // Method 6: Employee provider photo (legacy)
+                    else if (props.teacherData.employee_provider && props.teacherData.employee_provider.photo) {
+                        teacherPhotoUrl = props.teacherData.employee_provider.photo;
+                    }
+                    // Method 7: Employee provider profile_image (legacy)
+                    else if (props.teacherData.employee_provider && props.teacherData.employee_provider.profile_image) {
+                        teacherPhotoUrl = props.teacherData.employee_provider.profile_image;
+                    }
+                    
+                    // Debug logging for photo URL
+                    if (props.teacherData && console && console.log) {
+                        console.log('Teacher data for photo lookup:', props.teacherData);
+                        console.log('Found photo URL:', teacherPhotoUrl);
+                    }
+                    
+                    if (teacherPhotoUrl) {
+                        $teacherPhoto.attr('src', teacherPhotoUrl).show();
+                        $teacherPhotoPlaceholder.hide();
+                    } else {
+                        $teacherPhoto.hide();
+                        $teacherPhotoPlaceholder.show();
+                    }
+                    
                     // Create teacher description from available data
                     let teacherDescription = '';
                     
@@ -234,8 +300,7 @@
                         teacherDescription = props.teacherData.description;
                     } else {
                         // Create a basic description from available info
-                        const teacherName = props.teacher || 'Treneris';
-                        teacherDescription = `${teacherName} yra patyręs ir kvalifikuotas treneris, specializuojantis šioje veikloje.`;
+                        teacherDescription = `${props.teacher} yra patyręs ir kvalifikuotas treneris, specializuojantis šioje veikloje.`;
                     }
                     
                     if (teacherDescription) {
@@ -947,7 +1012,7 @@
             }
         } else {
             // Handle teacher description
-            const $desc = $btn.siblings('.teacher-description');
+            const $desc = $btn.siblings('.teacher-description-content');
             
             if ($desc.hasClass('expanded')) {
                 $desc.removeClass('expanded');
