@@ -5,6 +5,7 @@
     // Store original events for filtering
     let originalEvents = [];
     let calendar;
+    let isInitialLoad = true; // Track if this is the first load
     
     // Store filter data from APIs
     let filterData = {
@@ -540,6 +541,14 @@
                     successCallback(fallbackEvents);
                 } else {
                     successCallback(events);
+                    
+                    // Check if current week is empty and navigate to first week with events
+                    if (isInitialLoad) {
+                        setTimeout(() => {
+                            checkAndNavigateToFirstWeekWithEvents(events);
+                            isInitialLoad = false; // Ensure this only runs once
+                        }, 100); // Small delay to ensure calendar is fully rendered
+                    }
                 }
             } else {
                 throw new Error(response.data.message || 'Unknown error');
@@ -649,7 +658,14 @@
             // Remove existing event sources and reload without filters
             calendar.removeAllEventSources();
             calendar.addEventSource(function(fetchInfo, successCallback, failureCallback) {
-                loadEventsFromAPI(successCallback, failureCallback, {});
+                loadEventsFromAPI(function(events) {
+                    successCallback(events);
+                    
+                    // Check if current week is empty after clearing filters and navigate if needed
+                    setTimeout(() => {
+                        checkAndNavigateToFirstWeekWithEvents(events);
+                    }, 100);
+                }, failureCallback, {});
             });
         });
         
@@ -784,6 +800,11 @@
                 }
                 
                 successCallback(filteredEvents);
+                
+                // Check if current week is empty after applying filters and navigate if needed
+                setTimeout(() => {
+                    checkAndNavigateToFirstWeekWithEvents(filteredEvents);
+                }, 100);
             }, function(error) {
                 failureCallback(error);
             }, filters);
@@ -920,6 +941,49 @@
         };
     }
     
+    // Check if current week is empty and navigate to first week with events
+    function checkAndNavigateToFirstWeekWithEvents(events) {
+        if (!calendar || !events || events.length === 0) {
+            return;
+        }
+        
+        // Get current calendar view date range
+        const currentView = calendar.view;
+        const currentStart = currentView.activeStart;
+        const currentEnd = currentView.activeEnd;
+        
+        // Check if any events exist in current view range
+        const eventsInCurrentView = events.filter(event => {
+            const eventDate = new Date(event.start);
+            return eventDate >= currentStart && eventDate < currentEnd;
+        });
+        
+        // If current view has events, don't navigate
+        if (eventsInCurrentView.length > 0) {
+            return;
+        }
+        
+        // Find the earliest event date
+        let earliestEventDate = null;
+        events.forEach(event => {
+            const eventDate = new Date(event.start);
+            if (!earliestEventDate || eventDate < earliestEventDate) {
+                earliestEventDate = eventDate;
+            }
+        });
+        
+        // Navigate to the earliest event date if found
+        if (earliestEventDate) {
+            // Navigate calendar to the week/day containing the earliest event
+            calendar.gotoDate(earliestEventDate);
+            
+            // Optional: Log for debugging
+            if (console && console.log) {
+                console.log('ExoClass Calendar: Current week was empty, navigated to first week with events:', earliestEventDate);
+            }
+        }
+    }
+
     // Helper function to generate dates relative to today
     function getDateString(daysFromToday, hour = null, minute = null) {
         var date = new Date();

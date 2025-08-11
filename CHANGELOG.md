@@ -1,5 +1,20 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.4.0] - 2025-01-09
+### Pridėta
+- Automatinis kalendoriaus navigavimas į pirmą savaitę su renginiais
+- Išmanus tuščių savaičių aptikimas ir automatinis peršokimas
+- Auto-navigacija veikia su visais filtrais ir jų valymais
+- Responsive dizainas - veikia tiek darbalaukio (savaitės), tiek mobiliojo (dienos) vaizdavimo režimuose
+
+### Pakeista
+- Pagerintas vartotojo patyrimas - kalendorius visada rodo aktualų turinį
+- Optimizuota kalendoriaus navigacija nenustumiant rankiniu būdu navigacijos
+
+### Pataisyta
+- Tuščių savaičių problema kai API grąžina tik ateities renginius
+- Filtravimo rezultatų rodymas kai dabartinė savaitė tuščia
+
 ## [1.3.0] - 2025-01-07
 ### Pridėta
 - Universalus plugin design - pašalintas hardcoded provider key
