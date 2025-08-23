@@ -66,6 +66,14 @@ class ExoClassCalendarAdmin {
             'exoclass_calendar_display_section'
         );
         
+        add_settings_field(
+            'color',
+            'Accent Color',
+            array($this, 'color_callback'),
+            'exoclass-calendar-settings',
+            'exoclass_calendar_display_section'
+        );
+        
 
     }
     
@@ -120,25 +128,32 @@ class ExoClassCalendarAdmin {
                 </div>
                 
                 <div style="margin: 15px 0;">
-                    <h4>Filter by Availability</h4>
-                    <code>[exoclass_calendar filter_availability="available"]</code>
-                    <p style="margin: 5px 0; color: #666; font-size: 13px;">Shows only classes with available spots. Use "available" or "full".</p>
+                    <h4>Filter by Age Group</h4>
+                    <code>[exoclass_calendar filter_age="1,2,3"]</code>
+                    <p style="margin: 5px 0; color: #666; font-size: 13px;">Shows only classes for specific age groups. Use age group IDs: -1 to 18. Supports multiple values separated by commas.</p>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <h4>Filter by Class</h4>
+                    <code>[exoclass_calendar filter_class="1,2,3"]</code>
+                    <p style="margin: 5px 0; color: #666; font-size: 13px;">Shows only classes for specific school classes. Use class IDs: -1 to 12. Supports multiple values separated by commas.</p>
                 </div>
                 
                 <h3>Combining Filters</h3>
                 <p>You can combine multiple filters for more specific results:</p>
-                <code>[exoclass_calendar filter_activity="456" filter_availability="available" height="500px"]</code>
-                <br><code>[exoclass_calendar filter_location="123" filter_teacher="789" filter_level="234"]</code>
+                <code>[exoclass_calendar filter_activity="456,789" filter_age="1,2,3" height="500px"]</code>
+                <br><code>[exoclass_calendar filter_location="123" filter_teacher="789" filter_level="234" filter_age="1,2" filter_class="1,2,3"]</code>
                 
                 <h3>Complete Parameter Reference</h3>
                 <ul>
                     <li><strong>height</strong>: Set the calendar height (default: "auto")</li>
                     <li><strong>show_images</strong>: Enable/disable event images (default: "true")</li>
-                    <li><strong>filter_location</strong>: Pre-filter by location ID</li>
-                    <li><strong>filter_activity</strong>: Pre-filter by activity type ID</li>
-                    <li><strong>filter_teacher</strong>: Pre-filter by teacher/instructor ID</li>
-                    <li><strong>filter_level</strong>: Pre-filter by difficulty level ID</li>
-                    <li><strong>filter_availability</strong>: Pre-filter by availability ("available" or "full")</li>
+                    <li><strong>filter_location</strong>: Pre-filter by location ID(s) - supports comma-separated values</li>
+                    <li><strong>filter_activity</strong>: Pre-filter by activity type ID(s) - supports comma-separated values</li>
+                    <li><strong>filter_teacher</strong>: Pre-filter by teacher/instructor ID(s) - supports comma-separated values</li>
+                    <li><strong>filter_level</strong>: Pre-filter by difficulty level ID(s) - supports comma-separated values</li>
+                    <li><strong>filter_age</strong>: Pre-filter by age group ID(s) (-1 to 18) - supports comma-separated values</li>
+                    <li><strong>filter_class</strong>: Pre-filter by class ID(s) (-1 to 12) - supports comma-separated values</li>
                 </ul>
                 
                 <div style="background: #e7f3ff; padding: 15px; border-left: 4px solid #0073aa; margin: 15px 0;">
@@ -322,22 +337,61 @@ class ExoClassCalendarAdmin {
                                 html += '</div>';
                             }
                             
-                            // Availability options
-                            html += '<h4 style="color: #6f42c1;">🎯 Availability Options</h4>';
-                            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin-bottom: 10px;">';
-                            html += '<div style="background: white; padding: 8px 12px; border-radius: 3px; border-left: 3px solid #6f42c1;">';
-                            html += '<strong>Available Classes Only</strong><br>';
-                            html += '<code style="background: #f0f0f0; padding: 2px 4px; font-size: 12px;">filter_availability="available"</code>';
-                            html += '</div>';
-                            html += '<div style="background: white; padding: 8px 12px; border-radius: 3px; border-left: 3px solid #6f42c1;">';
-                            html += '<strong>Full Classes Only</strong><br>';
-                            html += '<code style="background: #f0f0f0; padding: 2px 4px; font-size: 12px;">filter_availability="full"</code>';
-                            html += '</div>';
-                            html += '</div>';
+                            // Age Groups
+                            if (response.data.ages && response.data.ages.length > 0) {
+                                html += '<h4 style="color: #20c997;">👶 Amžiaus grupės</h4>';
+                                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin-bottom: 20px;">';
+                                response.data.ages.forEach(function(item) {
+                                    const displayName = item.name || item.value || item.display_name || 'Age Group ' + item.id;
+                                    html += '<div style="background: white; padding: 8px 12px; border-radius: 3px; border-left: 3px solid #20c997;">';
+                                    html += '<strong>' + displayName + '</strong><br>';
+                                    html += '<code style="background: #f0f0f0; padding: 2px 4px; font-size: 12px;">filter_age="' + item.id + '"</code>';
+                                    html += '</div>';
+                                });
+                                html += '</div>';
+                            }
+                            
+                            // Classes
+                            if (response.data.classes && response.data.classes.length > 0) {
+                                html += '<h4 style="color: #6f42c1;">🎓 Klasės</h4>';
+                                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin-bottom: 20px;">';
+                                response.data.classes.forEach(function(item) {
+                                    html += '<div style="background: white; padding: 8px 12px; border-radius: 3px; border-left: 3px solid #6f42c1;">';
+                                    html += '<strong>' + item.name + '</strong><br>';
+                                    html += '<code style="background: #f0f0f0; padding: 2px 4px; font-size: 12px;">filter_class="' + item.id + '"</code>';
+                                    html += '</div>';
+                                });
+                                html += '</div>';
+                            }
                             
                             html += '</div>';
+                            
+                            // Add information about hardcoded filters
+                            html += '<div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 4px; margin-top: 15px;">';
+                            html += '<h4 style="margin-top: 0; color: #856404;">ℹ️ Amžiaus grupės ir klasės</h4>';
+                            html += '<p style="margin-bottom: 10px;">Amžiaus grupės ir klasės yra fiksuotos reikšmės, kurios nėra gaunamos iš API:</p>';
+                            html += '<ul style="margin: 10px 0 10px 20px;">';
+                            html += '<li><strong>Amžiaus grupės:</strong> Nuo -1 (<6 mėn) iki 18 (Suaugusieji)</li>';
+                            html += '<li><strong>Klasės:</strong> Nuo -1 (Darželinukai) iki 12 (12 Klasės)</li>';
+                            html += '</ul>';
+                            html += '<p style="margin-bottom: 0;">Šie ID\'ai yra standartiniai ir veiks visuose ExoClass sistemose.</p>';
+                            html += '</div>';
+                            
+                            // Add information about multiple values
+                            html += '<div style="background: #e7f3ff; border: 1px solid #b3d9ff; color: #0c5aa6; padding: 15px; border-radius: 4px; margin-top: 15px;">';
+                            html += '<h4 style="margin-top: 0; color: #0c5aa6;">🔢 Kelių reikšmių palaikymas</h4>';
+                            html += '<p style="margin-bottom: 10px;">Visi filtrai palaiko kelias reikšmes, atskirtas kableliais:</p>';
+                            html += '<ul style="margin: 10px 0 10px 20px;">';
+                            html += '<li><code>filter_age="1,2,3"</code> - Rodyti 1, 2 ir 3 metų amžiaus grupes</li>';
+                            html += '<li><code>filter_class="1,2,3"</code> - Rodyti 1, 2 ir 3 klases</li>';
+                            html += '<li><code>filter_activity="123,456"</code> - Rodyti kelias veiklas</li>';
+                            html += '<li><code>filter_location="789,101"</code> - Rodyti kelias vietas</li>';
+                            html += '</ul>';
+                            html += '<p style="margin-bottom: 0;">Pavyzdys: <code>[exoclass_calendar filter_age="1,2,3" filter_class="1,2"]</code></p>';
+                            html += '</div>';
+                            
                             html += '<div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px; border-radius: 4px; margin-top: 15px;">';
-                            html += '<strong>💡 Tip:</strong> Click on any code snippet above to copy it to your clipboard for easy use in shortcodes!';
+                            html += '<strong>💡 Patarimas:</strong> Spustelėkite bet kurį kodo fragmentą aukščiau, kad nukopijuotumėte jį į iškarpinę lengvam naudojimui shortcode\'uose!';
                             html += '</div>';
                             
                             resultDiv.html(html);
@@ -407,6 +461,24 @@ class ExoClassCalendarAdmin {
         <?php
     }
     
+    public function color_callback() {
+        $options = get_option('exoclass_calendar_options', array());
+        $value = isset($options['color']) ? $options['color'] : '#667eea';
+        ?>
+        <input type="color" id="color_picker" name="exoclass_calendar_options[color]" value="<?php echo esc_attr($value); ?>" />
+        <input type="text" id="color_text" name="exoclass_calendar_options[color_text]" value="<?php echo esc_attr($value); ?>" class="regular-text" style="margin-left: 10px;" placeholder="#667eea" readonly />
+        <p class="description">Choose the accent color for filters, buttons, and highlights. Default: #667eea</p>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            $('#color_picker').on('change', function() {
+                $('#color_text').val($(this).val());
+            });
+        });
+        </script>
+        <?php
+    }
+    
 
     
     public static function get_api_config() {
@@ -453,7 +525,8 @@ class ExoClassCalendarAdmin {
         $options = get_option('exoclass_calendar_options', array());
         
         return array(
-            'default_height' => isset($options['default_height']) ? $options['default_height'] : 'auto'
+            'default_height' => isset($options['default_height']) ? $options['default_height'] : 'auto',
+            'color' => isset($options['color']) ? $options['color'] : '#667eea'
         );
     }
 }
@@ -547,6 +620,47 @@ function exoclass_get_filter_ids_callback() {
                 $filter_data[$key] = array();
             }
         }
+        
+        // Add hardcoded age groups and classes (same as in main plugin)
+        $filter_data['ages'] = array(
+            array('id' => -1, 'name' => '<6 mėn'),
+            array('id' => 0, 'name' => '6-12 mėn'),
+            array('id' => 1, 'name' => '1 metų'),
+            array('id' => 2, 'name' => '2 metų'),
+            array('id' => 3, 'name' => '3 metų'),
+            array('id' => 4, 'name' => '4 metų'),
+            array('id' => 5, 'name' => '5 metų'),
+            array('id' => 6, 'name' => '6 metų'),
+            array('id' => 7, 'name' => '7 metų'),
+            array('id' => 8, 'name' => '8 metų'),
+            array('id' => 9, 'name' => '9 metų'),
+            array('id' => 10, 'name' => '10 metų'),
+            array('id' => 11, 'name' => '11 metų'),
+            array('id' => 12, 'name' => '12 metų'),
+            array('id' => 13, 'name' => '13 metų'),
+            array('id' => 14, 'name' => '14 metų'),
+            array('id' => 15, 'name' => '15 metų'),
+            array('id' => 16, 'name' => '16 metų'),
+            array('id' => 17, 'name' => '17 metų'),
+            array('id' => 18, 'name' => 'Suaugusieji')
+        );
+        
+        $filter_data['classes'] = array(
+            array('id' => -1, 'name' => 'Darželinukai'),
+            array('id' => 0, 'name' => 'Nulinukai'),
+            array('id' => 1, 'name' => '1 Klasės'),
+            array('id' => 2, 'name' => '2 Klasės'),
+            array('id' => 3, 'name' => '3 Klasės'),
+            array('id' => 4, 'name' => '4 Klasės'),
+            array('id' => 5, 'name' => '5 Klasės'),
+            array('id' => 6, 'name' => '6 Klasės'),
+            array('id' => 7, 'name' => '7 Klasės'),
+            array('id' => 8, 'name' => '8 Klasės'),
+            array('id' => 9, 'name' => '9 Klasės'),
+            array('id' => 10, 'name' => '10 Klasės'),
+            array('id' => 11, 'name' => '11 Klasės'),
+            array('id' => 12, 'name' => '12 Klasės')
+        );
         
         // If we have some data, consider it a success even if some endpoints failed
         if (!empty($filter_data)) {

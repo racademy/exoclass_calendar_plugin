@@ -3,7 +3,7 @@
  * Plugin Name: ExoClass Calendar
  * Plugin URI: https://exoclass.io
  * Description: A beautiful calendar plugin for displaying fitness classes and activities from ExoClass API with filtering capabilities.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: Bright Projects
  * Author URI: https://brightprojects.io
  * License: GPL v2 or later
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('EXOCLASS_CALENDAR_VERSION', '1.4.0');
+define('EXOCLASS_CALENDAR_VERSION', '1.5.0');
 define('EXOCLASS_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EXOCLASS_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -84,6 +84,14 @@ class ExoClassCalendar {
             '6.1.10'
         );
         
+        // Select2 CSS
+        wp_enqueue_style(
+            'select2',
+            'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
+            array(),
+            '4.1.0'
+        );
+        
         // FullCalendar JavaScript
         wp_enqueue_script(
             'fullcalendar',
@@ -102,6 +110,15 @@ class ExoClassCalendar {
             true
         );
         
+        // Select2 JavaScript
+        wp_enqueue_script(
+            'select2',
+            'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
+            array('jquery'),
+            '4.1.0',
+            true
+        );
+        
         // Custom plugin styles
         wp_enqueue_style(
             'exoclass-calendar-styles',
@@ -114,7 +131,7 @@ class ExoClassCalendar {
         wp_enqueue_script(
             'exoclass-calendar-script',
             EXOCLASS_CALENDAR_PLUGIN_URL . 'assets/js/calendar.js',
-            array('fullcalendar', 'fullcalendar-lt'),
+            array('fullcalendar', 'fullcalendar-lt', 'select2'),
             EXOCLASS_CALENDAR_VERSION,
             true
         );
@@ -133,7 +150,8 @@ class ExoClassCalendar {
                 'activity' => !empty($atts['filter_activity']) ? sanitize_text_field($atts['filter_activity']) : '',
                 'teacher' => !empty($atts['filter_teacher']) ? sanitize_text_field($atts['filter_teacher']) : '',
                 'level' => !empty($atts['filter_level']) ? sanitize_text_field($atts['filter_level']) : '',
-                'availability' => !empty($atts['filter_availability']) ? sanitize_text_field($atts['filter_availability']) : ''
+                'age' => !empty($atts['filter_age']) ? sanitize_text_field($atts['filter_age']) : '',
+                'class' => !empty($atts['filter_class']) ? sanitize_text_field($atts['filter_class']) : ''
             )
         ));
     }
@@ -143,11 +161,13 @@ class ExoClassCalendar {
         $atts = shortcode_atts(array(
             'height' => $display_config['default_height'],
             'show_images' => 'true',
+            'color' => $display_config['color'],
             'filter_location' => '',
             'filter_activity' => '',
             'filter_teacher' => '',
             'filter_level' => '',
-            'filter_availability' => ''
+            'filter_age' => '',
+            'filter_class' => ''
         ), $atts, 'exoclass_calendar');
         
         // Enqueue assets with attributes
@@ -155,45 +175,69 @@ class ExoClassCalendar {
         
         ob_start();
         ?>
-        <div class="exoclass-calendar-container">
+        <div class="exoclass-calendar-container" style="--exoclass-accent-color: <?php echo esc_attr($atts['color']); ?>">
             <!-- Filter Section -->
             <div class="filter-section">
                 <div class="filters-container">
                     <div class="filter-group">
-                        <select class="filter-dropdown" id="locationDropdown">
+                        <select class="filter-dropdown" id="locationDropdown" multiple>
                             <option value=""><?php _e('Visos vietos', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
                     
+                    <div class="filter-group" id="ageGroup">
+                        <div class="custom-dropdown" id="ageCustomDropdown">
+                            <div class="custom-dropdown-trigger">
+                                <span class="dropdown-text"><?php _e('Visi amžiai', 'exoclass-calendar'); ?></span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="custom-dropdown-content" id="ageDropdownContent">
+                                <div class="custom-dropdown-header">
+                                    <span class="dropdown-title"><?php _e('Amžiaus grupės', 'exoclass-calendar'); ?></span>
+                                    <button class="dropdown-clear" id="clearAgeSelection"><?php _e('Išvalyti', 'exoclass-calendar'); ?></button>
+                                </div>
+                                <div class="custom-button-selector" id="ageButtonSelector">
+                                    <!-- Age buttons will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="ageDropdown" multiple>
+                    </div>
+                    
+                    <div class="filter-group" id="classGroup">
+                        <div class="custom-dropdown" id="classCustomDropdown">
+                            <div class="custom-dropdown-trigger">
+                                <span class="dropdown-text"><?php _e('Visos klasės', 'exoclass-calendar'); ?></span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="custom-dropdown-content" id="classDropdownContent">
+                                <div class="custom-dropdown-header">
+                                    <span class="dropdown-title"><?php _e('Klasės', 'exoclass-calendar'); ?></span>
+                                    <button class="dropdown-clear" id="clearClassSelection"><?php _e('Išvalyti', 'exoclass-calendar'); ?></button>
+                                </div>
+                                <div class="custom-button-selector" id="classButtonSelector">
+                                    <!-- Class buttons will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="classDropdown" multiple>
+                    </div>
+                    
                     <div class="filter-group">
-                        <select class="filter-dropdown" id="activityDropdown">
+                        <select class="filter-dropdown" id="activityDropdown" multiple>
                             <option value=""><?php _e('Visos veiklos', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
                     
-                    <div class="filter-group" id="ageGroup">
-                        <select class="filter-dropdown" id="ageDropdown">
-                            <option value=""><?php _e('Visi amžiai', 'exoclass-calendar'); ?></option>
-                        </select>
-                    </div>
-                    
                     <div class="filter-group" id="difficultyGroup">
-                        <select class="filter-dropdown" id="difficultyDropdown">
+                        <select class="filter-dropdown" id="difficultyDropdown" multiple>
                             <option value=""><?php _e('Visi lygiai', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
                     
                     <div class="filter-group" id="teacherGroup">
-                        <select class="filter-dropdown" id="teacherDropdown">
+                        <select class="filter-dropdown" id="teacherDropdown" multiple>
                             <option value=""><?php _e('Visi treneriai', 'exoclass-calendar'); ?></option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <select class="filter-dropdown" id="availabilityDropdown">
-                            <option value=""><?php _e('Visos klasės', 'exoclass-calendar'); ?></option>
-                            <option value="available"><?php _e('Yra laisvų vietų', 'exoclass-calendar'); ?></option>
-                            <option value="full"><?php _e('Nėra laisvų vietų', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
                     
@@ -325,6 +369,9 @@ class ExoClassCalendar {
         if (!empty($filters['ages'])) {
             $api_url .= '&ages=' . implode(',', $filters['ages']) . '&age_type=age';
         }
+        if (!empty($filters['classes'])) {
+            $api_url .= '&classes=' . implode(',', $filters['classes']) . '&class_type=class';
+        }
         if (!empty($filters['teachers'])) {
             $api_url .= '&teachers=' . implode(',', $filters['teachers']);
         }
@@ -417,6 +464,48 @@ class ExoClassCalendar {
                 }
             }
         }
+        
+        // Add hardcoded age groups (based on ExoClass embed HTML structure)
+        $filter_data['ages'] = array(
+            array('id' => -1, 'name' => '<6 mėn'),
+            array('id' => 0, 'name' => '6-12 mėn'),
+            array('id' => 1, 'name' => '1 metų'),
+            array('id' => 2, 'name' => '2 metų'),
+            array('id' => 3, 'name' => '3 metų'),
+            array('id' => 4, 'name' => '4 metų'),
+            array('id' => 5, 'name' => '5 metų'),
+            array('id' => 6, 'name' => '6 metų'),
+            array('id' => 7, 'name' => '7 metų'),
+            array('id' => 8, 'name' => '8 metų'),
+            array('id' => 9, 'name' => '9 metų'),
+            array('id' => 10, 'name' => '10 metų'),
+            array('id' => 11, 'name' => '11 metų'),
+            array('id' => 12, 'name' => '12 metų'),
+            array('id' => 13, 'name' => '13 metų'),
+            array('id' => 14, 'name' => '14 metų'),
+            array('id' => 15, 'name' => '15 metų'),
+            array('id' => 16, 'name' => '16 metų'),
+            array('id' => 17, 'name' => '17 metų'),
+            array('id' => 18, 'name' => 'Suaugusieji')
+        );
+        
+        // Add hardcoded classes (based on ExoClass embed HTML structure)
+        $filter_data['classes'] = array(
+            array('id' => -1, 'name' => 'Darželinukai'),
+            array('id' => 0, 'name' => 'Nulinukai'),
+            array('id' => 1, 'name' => '1 Klasės'),
+            array('id' => 2, 'name' => '2 Klasės'),
+            array('id' => 3, 'name' => '3 Klasės'),
+            array('id' => 4, 'name' => '4 Klasės'),
+            array('id' => 5, 'name' => '5 Klasės'),
+            array('id' => 6, 'name' => '6 Klasės'),
+            array('id' => 7, 'name' => '7 Klasės'),
+            array('id' => 8, 'name' => '8 Klasės'),
+            array('id' => 9, 'name' => '9 Klasės'),
+            array('id' => 10, 'name' => '10 Klasės'),
+            array('id' => 11, 'name' => '11 Klasės'),
+            array('id' => 12, 'name' => '12 Klasės')
+        );
         
         // TEMP: Output filter data for debugging
         if (defined('WP_DEBUG') && WP_DEBUG) {

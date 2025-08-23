@@ -1,5 +1,35 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.5.0] - 2025-01-09
+### Pridėta
+- Multi-select filtrai su Select2 library integracija
+- Hardcoded amžiaus grupės ir klasės su lietuviškai lokalizacija (ID -1 iki 18 amžiui, -1 iki 12 klasėms)
+- Custom button-based selector amžiaus grupėms ir klasėms su responsive grid layout
+- Accent spalvos kontrolė admin panelėje ir shortcode parametru `color`
+- Comma-separated multiple values support visiems filtrams shortcode
+- Admin panelės dokumentacija hardcoded ID naudojimui
+
+### Pakeista
+- Visi filtrai dabar multi-select (vietos, veiklos, sunkumas, treneriai, amžius, klasės)
+- Pašalintas "availability" filtras (nebereikalingas)
+- Amžiaus/klasių filtrai naudoja custom dropdown su button grid vietoj Select2
+- Select2 dropdownai prisitaiko prie turinio pločio (`width: auto`)
+- Suvienodinti dropdown arrows - pašalinti iš visų filtrų
+- API calls palaiko multiple comma-separated values visiem filtrams
+
+### Pataisyta
+- Select2 selected items X button pozicionavimas (nebeuždengia teksto)
+- Select2 focus states naudoja accent spalvą
+- Responsive design amžiaus/klasių custom dropdownams
+- Mobile UI - dropdownai telpa ekrane be horizontal scroll
+- CSS variables teisingai veikia su accent spalvos keitimu
+
+### Techniniai pakeitimai
+- Pašalintas visas debug kodas (console.log statements)
+- Optimizuotas Select2 width handling su event listeners
+- Pagerintas CSS specificity accent spalvų taikymui
+- Lithuanian translations amžiaus grupėms ir klasėms
+
 ## [1.4.0] - 2025-01-09
 ### Pridėta
 - Automatinis kalendoriaus navigavimas į pirmą savaitę su renginiais

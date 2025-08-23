@@ -13,6 +13,8 @@
         activities: [],
         difficultyLevels: [],
         ages: [],
+        classes: [],
+        teachers: [],
         availableFilters: []
     };
     
@@ -20,6 +22,8 @@
     const API_CONFIG = exoclass_ajax.api_config;
     
     $(document).ready(function() {
+
+        
         var calendarEl = document.getElementById('calendar');
         
         if (!calendarEl) {
@@ -275,11 +279,8 @@
                         teacherPhotoUrl = props.teacherData.employee_provider.profile_image;
                     }
                     
-                    // Debug logging for photo URL
-                    if (props.teacherData && console && console.log) {
-                        console.log('Teacher data for photo lookup:', props.teacherData);
-                        console.log('Found photo URL:', teacherPhotoUrl);
-                    }
+
+
                     
                     if (teacherPhotoUrl) {
                         $teacherPhoto.attr('src', teacherPhotoUrl).show();
@@ -380,6 +381,7 @@
         
         // Load filter data and initialize filters
         loadFilterData().then(() => {
+
             initializeFilters();
             applyInitialFilters(); // Apply initial filters from shortcode
             setupEventHoverEffects();
@@ -629,15 +631,37 @@
     
     // Initialize filter functionality
     function initializeFilters() {
+
+        
         // Populate filter dropdowns from API data
         populateLocationDropdown();
         populateActivityDropdown(); 
         populateDifficultyDropdown();
         populateAgeDropdown();
-        populateTeacherDropdown(); // Add this line
+        populateClassDropdown();
+        populateTeacherDropdown();
         
-        // Add change listeners to all filter dropdowns
-        const dropdowns = ['#locationDropdown', '#activityDropdown', '#difficultyDropdown', '#ageDropdown', '#availabilityDropdown', '#teacherDropdown']; // Add teacherDropdown
+
+        
+        // Initialize Select2 for all multi-select dropdowns
+        initializeSelect2();
+        
+        // Force width adjustment after all dropdowns are populated
+        setTimeout(() => {
+            $('.select2-container').each(function() {
+                $(this).css({
+                    'width': 'auto',
+                    'min-width': '120px',
+                    'max-width': '250px',
+                    'display': 'inline-block'
+                });
+            });
+        }, 200);
+        
+
+        
+        // Add change listeners to Select2 filter dropdowns (excluding custom button selectors)
+        const dropdowns = ['#locationDropdown', '#activityDropdown', '#difficultyDropdown', '#teacherDropdown'];
         dropdowns.forEach(selector => {
             $(selector).on('change', function() {
                 // Auto-apply filters when dropdown changes
@@ -647,13 +671,19 @@
         
         // Clear filters
         $('#clearFilters').on('click', function() {
-            // Reset all dropdown values
-            $('#locationDropdown').val('');
-            $('#activityDropdown').val('');
-            $('#difficultyDropdown').val('');
-            $('#ageDropdown').val('');
-            $('#availabilityDropdown').val('');
-            $('#teacherDropdown').val(''); // Add this line
+            // Reset all dropdown values and trigger Select2 update
+            $('#locationDropdown').val(null).trigger('change');
+            $('#activityDropdown').val(null).trigger('change');
+            $('#difficultyDropdown').val(null).trigger('change');
+            $('#teacherDropdown').val(null).trigger('change');
+            
+            // Clear custom button selectors
+            $('#ageButtonSelector .age-button').removeClass('selected');
+            $('#classButtonSelector .class-button').removeClass('selected');
+            
+            // Update dropdown texts
+            updateDropdownText('#ageCustomDropdown', 'Visi amžiai');
+            updateDropdownText('#classCustomDropdown', 'Visos klasės');
             
             // Remove existing event sources and reload without filters
             calendar.removeAllEventSources();
@@ -672,6 +702,102 @@
         // Apply filters
         $('#applyFilters').on('click', function() {
             applyFiltersToCalendar();
+        });
+        
+        // Close custom dropdowns when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.custom-dropdown').length) {
+                $('.custom-dropdown').removeClass('open');
+            }
+        });
+    }
+    
+    // Toggle custom dropdown open/close
+    function toggleCustomDropdown(dropdownSelector) {
+        const $dropdown = $(dropdownSelector);
+        const isOpen = $dropdown.hasClass('open');
+        
+        // Close all other custom dropdowns
+        $('.custom-dropdown').removeClass('open');
+        
+        // Toggle this dropdown
+        if (!isOpen) {
+            $dropdown.addClass('open');
+        }
+    }
+    
+    // Update dropdown text based on selected items
+    function updateDropdownText(dropdownSelector, defaultText) {
+        const $dropdown = $(dropdownSelector);
+        const $text = $dropdown.find('.dropdown-text');
+        const selectedButtons = $dropdown.find('.age-button.selected, .class-button.selected');
+        
+        if (selectedButtons.length === 0) {
+            $text.text(defaultText);
+        } else if (selectedButtons.length === 1) {
+            $text.text(selectedButtons.first().text());
+        } else {
+            $text.text(`${selectedButtons.length} pasirinkta`);
+        }
+    }
+    
+    // Initialize Select2 for all multi-select dropdowns (excluding hidden inputs)
+    function initializeSelect2() {
+        $('.filter-dropdown[multiple]').not('input[type="hidden"]').each(function() {
+            const $this = $(this);
+            const placeholder = $this.find('option:first').text();
+            
+            $this.select2({
+                placeholder: placeholder,
+                allowClear: true,
+                width: 'style',
+                dropdownAutoWidth: true,
+                language: {
+                    noResults: function() {
+                        return 'Nerasta rezultatų';
+                    },
+                    searching: function() {
+                        return 'Ieškoma...';
+                    }
+                }
+            });
+            
+            // Force width adjustment after initialization and on any changes
+            const adjustWidth = function() {
+                const $container = $this.next('.select2-container');
+                $container.css({
+                    'width': 'auto',
+                    'min-width': '120px',
+                    'max-width': '250px',
+                    'display': 'inline-block'
+                });
+            };
+            
+            // Apply width immediately
+            adjustWidth();
+            
+            // Reapply width on various Select2 events
+            $this.on('select2:select select2:unselect select2:clear', adjustWidth);
+            
+            // Also apply after a short delay to catch any async updates
+            setTimeout(adjustWidth, 100);
+            
+            // Add scroll indicator when dropdown opens
+            $this.on('select2:open', function() {
+                setTimeout(() => {
+                    const $results = $('.select2-results__options');
+                    if ($results.length) {
+                        const scrollHeight = $results[0].scrollHeight;
+                        const clientHeight = $results[0].clientHeight;
+                        
+                        if (scrollHeight > clientHeight) {
+                            $results.attr('data-has-scroll', 'true');
+                        } else {
+                            $results.removeAttr('data-has-scroll');
+                        }
+                    }
+                }, 50);
+            });
         });
     }
     
@@ -725,19 +851,156 @@
         }
     }
     
-    // Populate age dropdown
+    // Populate age dropdown with custom button selector
     function populateAgeDropdown() {
-        const ageDropdown = $('#ageDropdown');
         const ageGroup = $('#ageGroup');
+        const ageButtonSelector = $('#ageButtonSelector');
         
+        // Always show age group since we have hardcoded data
+        ageGroup.show();
+        
+        // Check multiple possible sources for age data
+        let ageData = null;
+        
+        // Method 1: Check filters.age_filter.ages (primary structure)
         if (filterData.filters && filterData.filters.age_filter && filterData.filters.age_filter.ages) {
-            ageGroup.show();
+            ageData = filterData.filters.age_filter.ages;
+        }
+        // Method 2: Check if ages is directly in filterData
+        else if (filterData.ages && Array.isArray(filterData.ages)) {
+            ageData = filterData.ages;
+        }
+        // Method 3: Use hardcoded age data if no API data
+        else {
+            ageData = [
+                {id: -1, name: '<6 mėn'},
+                {id: 0, name: '6-12 mėn'},
+                {id: 1, name: '1 metų'},
+                {id: 2, name: '2 metų'},
+                {id: 3, name: '3 metų'},
+                {id: 4, name: '4 metų'},
+                {id: 5, name: '5 metų'},
+                {id: 6, name: '6 metų'},
+                {id: 7, name: '7 metų'},
+                {id: 8, name: '8 metų'},
+                {id: 9, name: '9 metų'},
+                {id: 10, name: '10 metų'},
+                {id: 11, name: '11 metų'},
+                {id: 12, name: '12 metų'},
+                {id: 13, name: '13 metų'},
+                {id: 14, name: '14 metų'},
+                {id: 15, name: '15 metų'},
+                {id: 16, name: '16 metų'},
+                {id: 17, name: '17 metų'},
+                {id: 18, name: 'Suaugusieji'}
+            ];
+        }
+        
+        if (ageData && ageData.length > 0) {
+            // Clear existing buttons
+            ageButtonSelector.empty();
             
-            filterData.filters.age_filter.ages.forEach(age => {
-                ageDropdown.append(`<option value="${age.id}">${age.name || age.value}</option>`);
+            // Create buttons for each age group
+            ageData.forEach(age => {
+                const displayName = age.name || age.value || age.display_name || `Amžius ${age.id}`;
+                const button = $(`<button class="age-button" data-value="${age.id}">${displayName}</button>`);
+                ageButtonSelector.append(button);
             });
+            
+            // Add click handlers for age buttons
+            ageButtonSelector.on('click', '.age-button', function(e) {
+                e.preventDefault();
+                $(this).toggleClass('selected');
+                updateDropdownText('#ageCustomDropdown', 'Visi amžiai');
+                applyFiltersToCalendar();
+            });
+            
+            // Add clear button handler
+            $('#clearAgeSelection').on('click', function(e) {
+                e.preventDefault();
+                ageButtonSelector.find('.age-button').removeClass('selected');
+                updateDropdownText('#ageCustomDropdown', 'Visi amžiai');
+                applyFiltersToCalendar();
+            });
+            
+            // Add dropdown toggle handler
+            $('#ageCustomDropdown .custom-dropdown-trigger').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleCustomDropdown('#ageCustomDropdown');
+            });
+            
+
+        }
+    }
+    
+    // Populate class dropdown with custom button selector
+    function populateClassDropdown() {
+        const classGroup = $('#classGroup');
+        const classButtonSelector = $('#classButtonSelector');
+        
+        // Always show class group since we have hardcoded data
+        classGroup.show();
+        
+        // Check if we have classes data from API, otherwise use hardcoded
+        let classData = null;
+        
+        if (filterData.classes && filterData.classes.length > 0) {
+            classData = filterData.classes;
         } else {
-            ageGroup.hide();
+            // Use hardcoded class data
+            classData = [
+                {id: -1, name: 'Darželinukai'},
+                {id: 0, name: 'Nulinukai'},
+                {id: 1, name: '1 Klasės'},
+                {id: 2, name: '2 Klasės'},
+                {id: 3, name: '3 Klasės'},
+                {id: 4, name: '4 Klasės'},
+                {id: 5, name: '5 Klasės'},
+                {id: 6, name: '6 Klasės'},
+                {id: 7, name: '7 Klasės'},
+                {id: 8, name: '8 Klasės'},
+                {id: 9, name: '9 Klasės'},
+                {id: 10, name: '10 Klasės'},
+                {id: 11, name: '11 Klasės'},
+                {id: 12, name: '12 Klasės'}
+            ];
+        }
+        
+        if (classData && classData.length > 0) {
+            // Clear existing buttons
+            classButtonSelector.empty();
+            
+            // Create buttons for each class
+            classData.forEach(classItem => {
+                const button = $(`<button class="class-button" data-value="${classItem.id}">${classItem.name}</button>`);
+                classButtonSelector.append(button);
+            });
+            
+            // Add click handlers for class buttons
+            classButtonSelector.on('click', '.class-button', function(e) {
+                e.preventDefault();
+                $(this).toggleClass('selected');
+                updateDropdownText('#classCustomDropdown', 'Visos klasės');
+                applyFiltersToCalendar();
+            });
+            
+            // Add clear button handler
+            $('#clearClassSelection').on('click', function(e) {
+                e.preventDefault();
+                classButtonSelector.find('.class-button').removeClass('selected');
+                updateDropdownText('#classCustomDropdown', 'Visos klasės');
+                applyFiltersToCalendar();
+            });
+            
+            // Add dropdown toggle handler
+            $('#classCustomDropdown .custom-dropdown-trigger').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleCustomDropdown('#classCustomDropdown');
+            });
+            
+
         }
     }
 
@@ -760,26 +1023,44 @@
     
     // Apply filters to calendar
     function applyFiltersToCalendar() {
-        // Collect filter values from dropdowns
+        // Collect filter values from dropdowns (now supporting multiple values)
         const filters = {};
         
-        const locationValue = $('#locationDropdown').val();
-        if (locationValue) filters.locations = [locationValue];
+        const locationValues = $('#locationDropdown').val();
+        if (locationValues && locationValues.length > 0 && locationValues[0] !== '') {
+            filters.locations = locationValues.filter(val => val !== '');
+        }
         
-        const activityValue = $('#activityDropdown').val();
-        if (activityValue) filters.activities = [activityValue];
+        const activityValues = $('#activityDropdown').val();
+        if (activityValues && activityValues.length > 0 && activityValues[0] !== '') {
+            filters.activities = activityValues.filter(val => val !== '');
+        }
         
-        const difficultyValue = $('#difficultyDropdown').val();
-        if (difficultyValue) filters.difficulties = [difficultyValue];
+        const difficultyValues = $('#difficultyDropdown').val();
+        if (difficultyValues && difficultyValues.length > 0 && difficultyValues[0] !== '') {
+            filters.difficulties = difficultyValues.filter(val => val !== '');
+        }
         
-        const ageValue = $('#ageDropdown').val();
-        if (ageValue) filters.ages = [ageValue];
+        // Get age values from custom button selector
+        const selectedAgeButtons = $('#ageButtonSelector .age-button.selected');
+        if (selectedAgeButtons.length > 0) {
+            filters.ages = selectedAgeButtons.map(function() {
+                return $(this).data('value');
+            }).get();
+        }
         
-        const teacherValue = $('#teacherDropdown').val();
-        if (teacherValue) filters.teachers = [teacherValue];
+        // Get class values from custom button selector
+        const selectedClassButtons = $('#classButtonSelector .class-button.selected');
+        if (selectedClassButtons.length > 0) {
+            filters.classes = selectedClassButtons.map(function() {
+                return $(this).data('value');
+            }).get();
+        }
         
-        // Get availability filter
-        const availabilityValue = $('#availabilityDropdown').val();
+        const teacherValues = $('#teacherDropdown').val();
+        if (teacherValues && teacherValues.length > 0 && teacherValues[0] !== '') {
+            filters.teachers = teacherValues.filter(val => val !== '');
+        }
         
         // Remove existing event sources to prevent duplicates
         calendar.removeAllEventSources();
@@ -787,23 +1068,11 @@
         // Create new event source with filters
         calendar.addEventSource(function(fetchInfo, successCallback, failureCallback) {
             loadEventsFromAPI(function(events) {
-                // Apply client-side availability filter if needed
-                let filteredEvents = events;
-                
-                if (availabilityValue) {
-                    filteredEvents = events.filter(event => {
-                        const availableSpots = event.extendedProps?.availableSpots || 0;
-                        if (availabilityValue === 'available' && availableSpots === 0) return false;
-                        if (availabilityValue === 'full' && availableSpots > 0) return false;
-                        return true;
-                    });
-                }
-                
-                successCallback(filteredEvents);
+                successCallback(events);
                 
                 // Check if current week is empty after applying filters and navigate if needed
                 setTimeout(() => {
-                    checkAndNavigateToFirstWeekWithEvents(filteredEvents);
+                    checkAndNavigateToFirstWeekWithEvents(events);
                 }, 100);
             }, function(error) {
                 failureCallback(error);
@@ -977,10 +1246,8 @@
             // Navigate calendar to the week/day containing the earliest event
             calendar.gotoDate(earliestEventDate);
             
-            // Optional: Log for debugging
-            if (console && console.log) {
-                console.log('ExoClass Calendar: Current week was empty, navigated to first week with events:', earliestEventDate);
-            }
+
+
         }
     }
 
@@ -1034,25 +1301,60 @@
         if (exoclass_ajax.initial_filters) {
             const filters = exoclass_ajax.initial_filters;
             
-            // Set dropdown values based on initial filters
+            // Helper function to parse comma-separated values
+            function parseFilterValue(value) {
+                if (!value) return null;
+                return value.split(',').map(v => v.trim()).filter(v => v !== '');
+            }
+            
+            // Set dropdown values based on initial filters (supporting comma-separated values)
             if (filters.location) {
-                $('#locationDropdown').val(filters.location);
+                const locationValues = parseFilterValue(filters.location);
+                if (locationValues && locationValues.length > 0) {
+                    $('#locationDropdown').val(locationValues).trigger('change');
+                }
             }
             if (filters.activity) {
-                $('#activityDropdown').val(filters.activity);
+                const activityValues = parseFilterValue(filters.activity);
+                if (activityValues && activityValues.length > 0) {
+                    $('#activityDropdown').val(activityValues).trigger('change');
+                }
             }
             if (filters.teacher) {
-                $('#teacherDropdown').val(filters.teacher);
+                const teacherValues = parseFilterValue(filters.teacher);
+                if (teacherValues && teacherValues.length > 0) {
+                    $('#teacherDropdown').val(teacherValues).trigger('change');
+                }
             }
             if (filters.level) {
-                $('#difficultyDropdown').val(filters.level);
+                const levelValues = parseFilterValue(filters.level);
+                if (levelValues && levelValues.length > 0) {
+                    $('#difficultyDropdown').val(levelValues).trigger('change');
+                }
             }
-            if (filters.availability) {
-                $('#availabilityDropdown').val(filters.availability);
+            if (filters.age) {
+                const ageValues = parseFilterValue(filters.age);
+                if (ageValues && ageValues.length > 0) {
+                    // Select age buttons based on values
+                    ageValues.forEach(value => {
+                        $(`#ageButtonSelector .age-button[data-value="${value}"]`).addClass('selected');
+                    });
+                    updateDropdownText('#ageCustomDropdown', 'Visi amžiai');
+                }
+            }
+            if (filters.class) {
+                const classValues = parseFilterValue(filters.class);
+                if (classValues && classValues.length > 0) {
+                    // Select class buttons based on values
+                    classValues.forEach(value => {
+                        $(`#classButtonSelector .class-button[data-value="${value}"]`).addClass('selected');
+                    });
+                    updateDropdownText('#classCustomDropdown', 'Visos klasės');
+                }
             }
             
             // Apply the filters if any are set
-            if (filters.location || filters.activity || filters.teacher || filters.level || filters.availability) {
+            if (filters.location || filters.activity || filters.teacher || filters.level || filters.age || filters.class) {
                 applyFiltersToCalendar();
             }
         }
