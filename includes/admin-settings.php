@@ -103,6 +103,19 @@ class ExoClassCalendarAdmin {
                 <h3>Filtering Options</h3>
                 <p>Pre-filter the calendar to show specific content using these filter parameters:</p>
                 
+                <h3>Hiding Filter Controls</h3>
+                <p>You can hide specific filter dropdowns by setting their parameter to "hide":</p>
+                <div style="background: #f0f0f1; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                    <code>[exoclass_calendar filter_class="hide"]</code> - Hide class filter<br>
+                    <code>[exoclass_calendar filter_age="hide"]</code> - Hide age group filter<br>
+                    <code>[exoclass_calendar filter_teacher="hide"]</code> - Hide teacher filter<br>
+                    <code>[exoclass_calendar filter_level="hide"]</code> - Hide difficulty level filter<br>
+                    <code>[exoclass_calendar filter_location="hide"]</code> - Hide location filter<br>
+                    <code>[exoclass_calendar filter_activity="hide"]</code> - Hide activity filter<br>
+                    <br>
+                    <strong>Example:</strong> <code>[exoclass_calendar filter_class="hide" filter_age="hide"]</code>
+                </div>
+                
                 <div style="margin: 15px 0;">
                     <h4>Filter by Location</h4>
                     <code>[exoclass_calendar filter_location="123"]</code>

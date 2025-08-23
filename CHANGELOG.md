@@ -1,5 +1,16 @@
 # ExoClass Calendar Plugin - Versijų istorija
 
+## [1.5.1] - 2025-01-09
+### Pridėta
+- Filtro paslėpimo funkcionalumas - galima paslėpti bet kurį filtrą naudojant `filter_xxx="hide"` shortcode parametrą
+- Admin panelės dokumentacija su filtro paslėpimo instrukcijomis ir pavyzdžiais
+
+### Pakeista
+- Amžiaus grupių dropdown tekstas iš "Visi amžiai" į "Visos amžiaus grupės" (aiškesnis pavadinimas)
+
+### Pataisyta
+- Shortcode parametrų `filter_location`, `filter_activity`, `filter_age`, `filter_class`, `filter_level`, `filter_teacher` paslėpimo logika
+
 ## [1.5.0] - 2025-01-09
 ### Pridėta
 - Multi-select filtrai su Select2 library integracija

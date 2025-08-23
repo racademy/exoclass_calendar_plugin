@@ -3,7 +3,7 @@
  * Plugin Name: ExoClass Calendar
  * Plugin URI: https://exoclass.io
  * Description: A beautiful calendar plugin for displaying fitness classes and activities from ExoClass API with filtering capabilities.
- * Version: 1.5.0
+ * Version: 1.5.1
  * Author: Bright Projects
  * Author URI: https://brightprojects.io
  * License: GPL v2 or later
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('EXOCLASS_CALENDAR_VERSION', '1.5.0');
+define('EXOCLASS_CALENDAR_VERSION', '1.5.1');
 define('EXOCLASS_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EXOCLASS_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -179,16 +179,19 @@ class ExoClassCalendar {
             <!-- Filter Section -->
             <div class="filter-section">
                 <div class="filters-container">
+                    <?php if ($atts['filter_location'] !== 'hide'): ?>
                     <div class="filter-group">
                         <select class="filter-dropdown" id="locationDropdown" multiple>
                             <option value=""><?php _e('Visos vietos', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if ($atts['filter_age'] !== 'hide'): ?>
                     <div class="filter-group" id="ageGroup">
                         <div class="custom-dropdown" id="ageCustomDropdown">
                             <div class="custom-dropdown-trigger">
-                                <span class="dropdown-text"><?php _e('Visi amžiai', 'exoclass-calendar'); ?></span>
+                                <span class="dropdown-text"><?php _e('Visos amžiaus grupės', 'exoclass-calendar'); ?></span>
                                 <span class="dropdown-arrow">▼</span>
                             </div>
                             <div class="custom-dropdown-content" id="ageDropdownContent">
@@ -203,7 +206,9 @@ class ExoClassCalendar {
                         </div>
                         <input type="hidden" id="ageDropdown" multiple>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if ($atts['filter_class'] !== 'hide'): ?>
                     <div class="filter-group" id="classGroup">
                         <div class="custom-dropdown" id="classCustomDropdown">
                             <div class="custom-dropdown-trigger">
@@ -222,24 +227,31 @@ class ExoClassCalendar {
                         </div>
                         <input type="hidden" id="classDropdown" multiple>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if ($atts['filter_activity'] !== 'hide'): ?>
                     <div class="filter-group">
                         <select class="filter-dropdown" id="activityDropdown" multiple>
                             <option value=""><?php _e('Visos veiklos', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if ($atts['filter_level'] !== 'hide'): ?>
                     <div class="filter-group" id="difficultyGroup">
                         <select class="filter-dropdown" id="difficultyDropdown" multiple>
                             <option value=""><?php _e('Visi lygiai', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if ($atts['filter_teacher'] !== 'hide'): ?>
                     <div class="filter-group" id="teacherGroup">
                         <select class="filter-dropdown" id="teacherDropdown" multiple>
                             <option value=""><?php _e('Visi treneriai', 'exoclass-calendar'); ?></option>
                         </select>
                     </div>
+                    <?php endif; ?>
                     
                     <div class="filter-actions">
                         <button class="btn btn-clear" id="clearFilters"><?php _e('Išvalyti viską', 'exoclass-calendar'); ?></button>
