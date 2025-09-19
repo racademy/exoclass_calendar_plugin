@@ -42,7 +42,7 @@
             aspectRatio: null,
             locale: 'lt',
             firstDay: 1, // Monday start
-            timeZone: 'Europe/Vilnius',
+            //timeZone: 'Europe/Vilnius',
             dayMaxEvents: false,
             eventMaxStack: 3,
             
@@ -60,12 +60,12 @@
                     let startTime = event.start.toLocaleTimeString('lt-LT', { 
                         hour: '2-digit', 
                         minute: '2-digit', 
-                        timeZone: 'Europe/Vilnius'
+                        //timeZone: 'Europe/Vilnius'
                     });
                     let endTime = event.end ? event.end.toLocaleTimeString('lt-LT', { 
                         hour: '2-digit', 
                         minute: '2-digit', 
-                        timeZone: 'Europe/Vilnius'
+                        //timeZone: 'Europe/Vilnius'
                     }) : '';
                     let timeRange = startTime + (endTime ? ' - ' + endTime : '');
                     
@@ -143,12 +143,12 @@
                 const startTime = event.start.toLocaleTimeString('lt-LT', { 
                     hour: '2-digit', 
                     minute: '2-digit',
-                    timeZone: 'Europe/Vilnius'
+                    //timeZone: 'Europe/Vilnius'
                 });
                 const endTime = event.end ? event.end.toLocaleTimeString('lt-LT', { 
                     hour: '2-digit', 
                     minute: '2-digit',
-                    timeZone: 'Europe/Vilnius'
+                    //timeZone: 'Europe/Vilnius'
                 }) : '';
                 const timeRange = startTime + (endTime ? ' - ' + endTime : '');
                 
